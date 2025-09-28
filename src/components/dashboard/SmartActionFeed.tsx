@@ -1,7 +1,6 @@
 import { Lightbulb, Target, AlertTriangle } from 'lucide-react'
 import { observer } from 'mobx-react-lite'
 import { useStore } from '../../stores'
-import type { ActionItem } from '../../stores/DashboardStore'
 
 const SmartActionFeed = observer(() => {
   const { dashboardStore } = useStore()

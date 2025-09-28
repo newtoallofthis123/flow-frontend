@@ -8,10 +8,13 @@ import {
   Brain,
   Settings
 } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
 
 const Sidebar = () => {
+  const location = useLocation()
+
   const navItems = [
-    { icon: BarChart3, label: 'Dashboard', path: '/dashboard', active: true },
+    { icon: BarChart3, label: 'Dashboard', path: '/dashboard' },
     { icon: Users, label: 'Contacts', path: '/contacts' },
     { icon: Target, label: 'Deals', path: '/deals', badge: '7' },
     { icon: MessageSquare, label: 'Messages', path: '/messages' },
@@ -21,30 +24,37 @@ const Sidebar = () => {
     { icon: Settings, label: 'Settings', path: '/settings' },
   ]
 
+  const isActive = (path: string) => {
+    return location.pathname === path || (path === '/dashboard' && location.pathname === '/')
+  }
+
   return (
     <div className="w-64 bg-slate-900 border-r border-slate-800">
       <div className="p-6">
-        <div className="flex items-center space-x-2 mb-8">
+        <Link to="/dashboard" className="flex items-center space-x-2 mb-8 hover:opacity-80 transition-opacity">
           <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">F</span>
           </div>
           <span className="text-xl font-bold text-white">FLOW</span>
-        </div>
+        </Link>
 
         <nav className="space-y-2">
           {navItems.map((item) => {
             const Icon = item.icon
+            const active = isActive(item.path)
+
             return (
-              <div
+              <Link
                 key={item.path}
-                className={`flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${
-                  item.active
+                to={item.path}
+                className={`flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors ${
+                  active
                     ? 'bg-slate-800 text-white'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
                 } ${item.highlight ? 'bg-purple-900/20 border border-purple-700/30' : ''}`}
               >
                 <div className="flex items-center space-x-3">
-                  <Icon className={`w-5 h-5 ${item.highlight ? 'text-purple-400' : ''}`} />
+                  <Icon className={`w-5 h-5 ${item.highlight ? 'text-purple-400' : active ? 'text-white' : ''}`} />
                   <span className="text-sm font-medium">{item.label}</span>
                 </div>
                 {item.badge && (
@@ -52,7 +62,7 @@ const Sidebar = () => {
                     {item.badge}
                   </span>
                 )}
-              </div>
+              </Link>
             )
           })}
         </nav>

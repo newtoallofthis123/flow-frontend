@@ -83,7 +83,7 @@ export class ContactsStore {
         break
     }
 
-    return filtered.sort((a, b) => b.healthScore - a.healthScore)
+    return filtered.slice().sort((a, b) => b.healthScore - a.healthScore)
   }
 
   get contactStats() {

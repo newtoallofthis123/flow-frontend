@@ -1,11 +1,9 @@
 import { observer } from 'mobx-react-lite'
-import { useStore } from '../stores'
 import MainLayout from '../components/layout/MainLayout'
 import AIForecastCard from '../components/dashboard/AIForecastCard'
 import SmartActionFeed from '../components/dashboard/SmartActionFeed'
 
 const Dashboard = observer(() => {
-  const { dashboardStore } = useStore()
 
   return (
     <MainLayout>
