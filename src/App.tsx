@@ -1,5 +1,7 @@
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { StoreContext, rootStore } from './stores'
+import ProtectedRoute from './components/auth/ProtectedRoute'
+import Login from './pages/Login'
 import HelloWorld from './pages/HelloWorld'
 import Dashboard from './pages/Dashboard'
 import Contacts from './pages/Contacts'
@@ -7,50 +9,102 @@ import Deals from './pages/Deals'
 import Messages from './pages/Messages'
 import Calendar from './pages/Calendar'
 
+const RootRedirect = () => {
+  const token = localStorage.getItem('auth_token')
+  if (token) {
+    return <Navigate to="/dashboard" replace />
+  }
+  return <Navigate to="/login" replace />
+}
+
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Dashboard />
+    element: <RootRedirect />
+  },
+  {
+    path: '/login',
+    element: <Login />
   },
   {
     path: '/dashboard',
-    element: <Dashboard />
+    element: (
+      <ProtectedRoute>
+        <Dashboard />
+      </ProtectedRoute>
+    )
   },
   {
     path: '/contacts',
-    element: <Contacts />
+    element: (
+      <ProtectedRoute>
+        <Contacts />
+      </ProtectedRoute>
+    )
   },
   {
     path: '/contacts/:id',
-    element: <Contacts />
+    element: (
+      <ProtectedRoute>
+        <Contacts />
+      </ProtectedRoute>
+    )
   },
   {
     path: '/deals',
-    element: <Deals />
+    element: (
+      <ProtectedRoute>
+        <Deals />
+      </ProtectedRoute>
+    )
   },
   {
     path: '/deals/:id',
-    element: <Deals />
+    element: (
+      <ProtectedRoute>
+        <Deals />
+      </ProtectedRoute>
+    )
   },
   {
     path: '/messages',
-    element: <Messages />
+    element: (
+      <ProtectedRoute>
+        <Messages />
+      </ProtectedRoute>
+    )
   },
   {
     path: '/messages/:id',
-    element: <Messages />
+    element: (
+      <ProtectedRoute>
+        <Messages />
+      </ProtectedRoute>
+    )
   },
   {
     path: '/calendar',
-    element: <Calendar />
+    element: (
+      <ProtectedRoute>
+        <Calendar />
+      </ProtectedRoute>
+    )
   },
   {
     path: '/calendar/:id',
-    element: <Calendar />
+    element: (
+      <ProtectedRoute>
+        <Calendar />
+      </ProtectedRoute>
+    )
   },
   {
     path: '/hello',
-    element: <HelloWorld />
+    element: (
+      <ProtectedRoute>
+        <HelloWorld />
+      </ProtectedRoute>
+    )
   }
 ])
 

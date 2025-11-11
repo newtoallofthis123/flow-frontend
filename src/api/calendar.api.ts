@@ -31,17 +31,17 @@ export const calendarApi = {
   deleteEvent: (id: string) =>
     apiClient.delete<{ success: boolean }>(`/api/calendar/events/${id}`),
 
-  // PATCH /api/calendar/events/:id/status
-  updateEventStatus: (id: string, status: CalendarEvent['status']) =>
-    apiClient.patch<CalendarEvent>(`/api/calendar/events/${id}/status`, { status }),
+  // PATCH /api/calendar/events/:calendar_id/status
+  updateEventStatus: (calendarId: string, status: CalendarEvent['status']) =>
+    apiClient.patch<CalendarEvent>(`/api/calendar/events/${calendarId}/status`, { status }),
 
-  // POST /api/calendar/events/:id/outcome
-  addOutcome: (id: string, outcome: MeetingOutcome) =>
-    apiClient.post<CalendarEvent>(`/api/calendar/events/${id}/outcome`, outcome),
+  // POST /api/calendar/events/:calendar_id/outcome
+  addOutcome: (calendarId: string, outcome: MeetingOutcome) =>
+    apiClient.post<CalendarEvent>(`/api/calendar/events/${calendarId}/outcome`, outcome),
 
-  // GET /api/calendar/events/:id/preparation
-  getPreparation: (id: string) =>
-    apiClient.get<MeetingPreparation>(`/api/calendar/events/${id}/preparation`),
+  // GET /api/calendar/events/:calendar_id/preparation
+  getPreparation: (calendarId: string) =>
+    apiClient.get<MeetingPreparation>(`/api/calendar/events/${calendarId}/preparation`),
 
   // POST /api/calendar/smart-scheduling
   smartScheduling: (data: {
@@ -51,13 +51,13 @@ export const calendarApi = {
     preferredTimes?: Date[]
   }) => apiClient.post<SmartScheduling>('/api/calendar/smart-scheduling', data),
 
-  // GET /api/calendar/stats
+  // GET /api/calendar-stats
   getStats: () =>
     apiClient.get<{
       totalThisWeek: number
       meetingsThisWeek: number
       highPriorityThisWeek: number
       followUpsNeeded: number
-    }>('/api/calendar/stats'),
+    }>('/api/calendar-stats'),
 }
 

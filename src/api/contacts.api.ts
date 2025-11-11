@@ -25,28 +25,28 @@ export const contactsApi = {
   deleteContact: (id: string) =>
     apiClient.delete<{ success: boolean }>(`/api/contacts/${id}`),
 
-  // POST /api/contacts/:id/communication
+  // POST /api/contacts/:contact_id/communication
   addCommunication: (
-    id: string,
+    contactId: string,
     data: {
       type: 'email' | 'call' | 'meeting' | 'note'
       date: Date
       subject?: string
       summary: string
     }
-  ) => apiClient.post<CommunicationEvent>(`/api/contacts/${id}/communication`, data),
+  ) => apiClient.post<CommunicationEvent>(`/api/contacts/${contactId}/communication`, data),
 
-  // GET /api/contacts/:id/ai-insights
-  getAIInsights: (id: string) =>
-    apiClient.get<AIInsight[]>(`/api/contacts/${id}/ai-insights`),
+  // GET /api/contacts/:contact_id/ai-insights
+  getAIInsights: (contactId: string) =>
+    apiClient.get<AIInsight[]>(`/api/contacts/${contactId}/ai-insights`),
 
-  // GET /api/contacts/stats
+  // GET /api/contacts-stats
   getStats: () =>
     apiClient.get<{
       total: number
       highValue: number
       atRisk: number
       needsFollowUp: number
-    }>('/api/contacts/stats'),
+    }>('/api/contacts-stats'),
 }
 

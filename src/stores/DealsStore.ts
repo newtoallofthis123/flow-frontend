@@ -189,23 +189,26 @@ export class DealsStore extends BaseStore {
     return this.forecastData
   }
 
-  setViewMode = (mode: typeof this.viewMode) => {
+  // Actions
+  setViewMode(mode: typeof this.viewMode) {
     this.viewMode = mode
   }
 
-  setFilter = (filter: typeof this.filterBy) => {
+  setFilter(filter: typeof this.filterBy) {
     this.filterBy = filter
   }
 
-  setSearchQuery = (query: string) => {
+  setSearchQuery(query: string) {
     this.searchQuery = query
   }
 
-  selectDeal = (deal: Deal) => {
+  selectDeal(deal: Deal | null) {
     this.selectedDeal = deal
   }
 
-  // Actions
+  setDraggedDeal(deal: Deal | null) {
+    this.draggedDeal = deal
+  }
   async fetchDeals() {
     return this.executeAsync(
       async () => {
@@ -367,30 +370,5 @@ export class DealsStore extends BaseStore {
         showLoading: false,
       }
     )
-  }
-
-  setDraggedDeal = (deal: Deal | null) => {
-    this.draggedDeal = deal
-  }
-
-  // Local state actions
-  setViewMode = (mode: typeof this.viewMode) => {
-    this.viewMode = mode
-  }
-
-  setFilter = (filter: typeof this.filterBy) => {
-    this.filterBy = filter
-  }
-
-  setSearchQuery = (query: string) => {
-    this.searchQuery = query
-  }
-
-  selectDeal = (deal: Deal | null) => {
-    this.selectedDeal = deal
-  }
-
-  setDraggedDeal = (deal: Deal | null) => {
-    this.draggedDeal = deal
   }
 }

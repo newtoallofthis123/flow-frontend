@@ -24,13 +24,13 @@ export const dealsApi = {
   deleteDeal: (id: string) =>
     apiClient.delete<{ success: boolean }>(`/api/deals/${id}`),
 
-  // PATCH /api/deals/:id/stage
-  updateDealStage: (id: string, stage: DealStage) =>
-    apiClient.patch<Deal>(`/api/deals/${id}/stage`, { stage }),
+  // PATCH /api/deals/:deal_id/stage
+  updateDealStage: (dealId: string, stage: DealStage) =>
+    apiClient.patch<Deal>(`/api/deals/${dealId}/stage`, { stage }),
 
-  // POST /api/deals/:id/activities
+  // POST /api/deals/:deal_id/activities
   addActivity: (
-    id: string,
+    dealId: string,
     data: {
       type: DealActivity['type']
       date: Date
@@ -38,19 +38,19 @@ export const dealsApi = {
       outcome?: string
       nextStep?: string
     }
-  ) => apiClient.post<DealActivity>(`/api/deals/${id}/activities`, data),
+  ) => apiClient.post<DealActivity>(`/api/deals/${dealId}/activities`, data),
 
-  // GET /api/deals/forecast
+  // GET /api/deals-forecast
   getForecast: () =>
     apiClient.get<{
       totalPipeline: number
       weightedForecast: number
       dealsClosingThisMonth: number
       monthlyForecast: number
-    }>('/api/deals/forecast'),
+    }>('/api/deals-forecast'),
 
-  // GET /api/deals/stage-stats
+  // GET /api/deals-stage-stats
   getStageStats: () =>
-    apiClient.get<StageStats[]>('/api/deals/stage-stats'),
+    apiClient.get<StageStats[]>('/api/deals-stage-stats'),
 }
 

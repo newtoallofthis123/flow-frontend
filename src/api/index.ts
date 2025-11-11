@@ -6,4 +6,7 @@ export * from './deals.api'
 export * from './messages.api'
 export * from './calendar.api'
 export * from './dashboard.api'
+export * from './notifications.api'
+export * from './search.api'
+export * from './tags.api'
 

@@ -12,7 +12,7 @@ export const messagesApi = {
   getConversation: (id: string) =>
     apiClient.get<Conversation>(`/api/conversations/${id}`),
 
-  // POST /api/conversations/:id/messages
+  // POST /api/conversations/:conversation_id/messages
   sendMessage: (
     conversationId: string,
     data: {
@@ -22,17 +22,17 @@ export const messagesApi = {
     }
   ) => apiClient.post<Message>(`/api/conversations/${conversationId}/messages`, data),
 
-  // PATCH /api/conversations/:id/priority
-  updatePriority: (id: string, priority: 'high' | 'medium' | 'low') =>
-    apiClient.patch<Conversation>(`/api/conversations/${id}/priority`, { priority }),
+  // PATCH /api/conversations/:conversation_id/priority
+  updatePriority: (conversationId: string, priority: 'high' | 'medium' | 'low') =>
+    apiClient.patch<Conversation>(`/api/conversations/${conversationId}/priority`, { priority }),
 
-  // PATCH /api/conversations/:id/archive
-  archiveConversation: (id: string, archived: boolean) =>
-    apiClient.patch<Conversation>(`/api/conversations/${id}/archive`, { archived }),
+  // PATCH /api/conversations/:conversation_id/archive
+  archiveConversation: (conversationId: string, archived: boolean) =>
+    apiClient.patch<Conversation>(`/api/conversations/${conversationId}/archive`, { archived }),
 
-  // POST /api/conversations/:id/tags
-  addTag: (id: string, tag: string) =>
-    apiClient.post<Conversation>(`/api/conversations/${id}/tags`, { tag }),
+  // POST /api/conversations/:conversation_id/tags
+  addTag: (conversationId: string, tag: string) =>
+    apiClient.post<Conversation>(`/api/conversations/${conversationId}/tags`, { tag }),
 
   // GET /api/messages/:id/ai-analysis
   getAIAnalysis: (messageId: string) =>
@@ -46,7 +46,7 @@ export const messagesApi = {
   getTemplates: (category?: string) =>
     apiClient.get<MessageTemplate[]>('/api/messages/templates', category ? { category } : undefined),
 
-  // GET /api/messages/stats
+  // GET /api/messages-stats
   getStats: () =>
     apiClient.get<{
       total: number
@@ -54,14 +54,14 @@ export const messagesApi = {
       highPriority: number
       needsFollowUp: number
       averageResponseTime: string
-    }>('/api/messages/stats'),
+    }>('/api/messages-stats'),
 
-  // GET /api/messages/sentiment-overview
+  // GET /api/messages-sentiment-overview
   getSentimentOverview: () =>
     apiClient.get<{
       positive: number
       neutral: number
       negative: number
-    }>('/api/messages/sentiment-overview'),
+    }>('/api/messages-sentiment-overview'),
 }
 

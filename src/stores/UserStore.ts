@@ -15,9 +15,17 @@ export class UserStore extends BaseStore {
       user: observable,
       isAuthenticated: observable,
       token: observable,
+      login: action,
+      logout: action,
+      fetchCurrentUser: action,
+      refreshToken: action,
       updatePreferences: action,
     })
     this.initializeAuth()
+    // Set up logout callback for API client
+    apiClient.setOnLogout(() => {
+      this.logout()
+    })
   }
 
   private initializeAuth() {
