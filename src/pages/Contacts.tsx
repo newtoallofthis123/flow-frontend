@@ -6,14 +6,15 @@ import HealthScore from '../components/ui/HealthScore'
 import SentimentIndicator from '../components/ui/SentimentIndicator'
 import AIInsight from '../components/ui/AIInsight'
 import { Phone, Mail, Building, Calendar, MessageSquare, DollarSign, Tag, Clock, TrendingUp, User } from 'lucide-react'
-import { useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 
 const Contacts = observer(() => {
   const { contactsStore } = useStore()
-  const [selectedContactId, setSelectedContactId] = useState<string | null>(null)
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
 
-  const selectedContact = selectedContactId
-    ? contactsStore.contacts.find(c => c.id === selectedContactId)
+  const selectedContact = id
+    ? contactsStore.contacts.find(c => c.id === id)
     : null
 
   const formatCurrency = (amount: number) => {
@@ -104,9 +105,9 @@ const Contacts = observer(() => {
               {contactsStore.filteredContacts.map((contact) => (
                 <div
                   key={contact.id}
-                  onClick={() => setSelectedContactId(contact.id)}
+                  onClick={() => navigate(`/contacts/${contact.id}`)}
                   className={`p-4 rounded-lg border cursor-pointer transition-all ${
-                    selectedContactId === contact.id
+                    id === contact.id
                       ? 'bg-accent border-primary'
                       : 'bg-card border-border hover:bg-accent/50'
                   }`}

@@ -4,15 +4,16 @@ import MainLayout from '../components/layout/MainLayout'
 import SearchBar from '../components/ui/SearchBar'
 import AIInsight from '../components/ui/AIInsight'
 import { Calendar as CalendarIcon, Clock, Video, MapPin, Users, Building, Target, Brain, Plus } from 'lucide-react'
-import { useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { CalendarEvent } from '../stores/CalendarStore'
 
 const Calendar = observer(() => {
   const { calendarStore } = useStore()
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
 
-  const selectedEvent = selectedEventId
-    ? calendarStore.events.find(e => e.id === selectedEventId)
+  const selectedEvent = id
+    ? calendarStore.events.find(e => e.id === id)
     : null
 
   const formatDate = (date: Date) => {
@@ -100,9 +101,9 @@ const Calendar = observer(() => {
 
     return (
       <div
-        onClick={() => setSelectedEventId(event.id)}
+        onClick={() => navigate(`/calendar/${event.id}`)}
         className={`p-4 bg-card border-l-4 rounded-lg cursor-pointer hover:bg-accent/50 transition-all border border-border ${getPriorityColor(event.priority)} ${
-          selectedEventId === event.id ? 'ring-2 ring-primary' : ''
+          id === event.id ? 'ring-2 ring-primary' : ''
         }`}
       >
         {/* Event Header */}

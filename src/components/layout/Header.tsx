@@ -1,4 +1,5 @@
 import { Search, Share2, Bell, HelpCircle, User } from 'lucide-react'
+import ThemeToggle from '../ui/ThemeToggle'
 
 const Header = () => {
   return (
@@ -15,13 +16,14 @@ const Header = () => {
       </div>
 
       <div className="flex items-center space-x-4">
-        <button className="p-2 text-muted-foreground hover:text-foreground transition-colors">
+        <ThemeToggle />
+        <button className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-accent">
           <Share2 className="w-5 h-5" />
         </button>
-        <button className="p-2 text-muted-foreground hover:text-foreground transition-colors">
+        <button className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-accent">
           <Bell className="w-5 h-5" />
         </button>
-        <button className="p-2 text-muted-foreground hover:text-foreground transition-colors">
+        <button className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-accent">
           <HelpCircle className="w-5 h-5" />
         </button>
         <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center border border-border">

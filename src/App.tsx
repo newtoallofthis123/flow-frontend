@@ -21,7 +21,15 @@ const router = createBrowserRouter([
     element: <Contacts />
   },
   {
+    path: '/contacts/:id',
+    element: <Contacts />
+  },
+  {
     path: '/deals',
+    element: <Deals />
+  },
+  {
+    path: '/deals/:id',
     element: <Deals />
   },
   {
@@ -29,7 +37,15 @@ const router = createBrowserRouter([
     element: <Messages />
   },
   {
+    path: '/messages/:id',
+    element: <Messages />
+  },
+  {
     path: '/calendar',
+    element: <Calendar />
+  },
+  {
+    path: '/calendar/:id',
     element: <Calendar />
   },
   {

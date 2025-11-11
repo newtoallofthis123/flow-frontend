@@ -5,15 +5,16 @@ import SearchBar from '../components/ui/SearchBar'
 import ProbabilityBadge from '../components/ui/ProbabilityBadge'
 import AIInsight from '../components/ui/AIInsight'
 import { Target, DollarSign, Calendar, Building, User, AlertTriangle, TrendingUp, Brain, Plus, MoreHorizontal, Users } from 'lucide-react'
-import { useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { DealStage, Deal } from '../stores/DealsStore'
 
 const Deals = observer(() => {
   const { dealsStore } = useStore()
-  const [selectedDealId, setSelectedDealId] = useState<string | null>(null)
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
 
-  const selectedDeal = selectedDealId
-    ? dealsStore.deals.find(d => d.id === selectedDealId)
+  const selectedDeal = id
+    ? dealsStore.deals.find(d => d.id === id)
     : null
 
   const formatCurrency = (amount: number) => {
@@ -86,9 +87,9 @@ const Deals = observer(() => {
 
   const DealCard = ({ deal }: { deal: Deal }) => (
     <div
-      onClick={() => setSelectedDealId(deal.id)}
+      onClick={() => navigate(`/deals/${deal.id}`)}
       className={`p-4 bg-card border border-border rounded-lg cursor-pointer hover:bg-accent/50 transition-all ${
-        selectedDealId === deal.id ? 'ring-2 ring-primary' : ''
+        id === deal.id ? 'ring-2 ring-primary' : ''
       }`}
     >
       {/* Deal Header */}
@@ -320,7 +321,7 @@ const Deals = observer(() => {
                 </div>
               </div>
               <button
-                onClick={() => setSelectedDealId(null)}
+                onClick={() => navigate('/deals')}
                 className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 ×

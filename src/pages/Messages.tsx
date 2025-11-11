@@ -4,14 +4,15 @@ import MainLayout from '../components/layout/MainLayout'
 import SearchBar from '../components/ui/SearchBar'
 import SentimentIndicator from '../components/ui/SentimentIndicator'
 import { MessageSquare, Send, Phone, Mail, Calendar, Building, User, Brain, Lightbulb, Zap, Clock, Paperclip, Smile } from 'lucide-react'
-import { useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 
 const Messages = observer(() => {
   const { messagesStore } = useStore()
-  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
 
-  const selectedConversation = selectedConversationId
-    ? messagesStore.conversations.find(c => c.id === selectedConversationId)
+  const selectedConversation = id
+    ? messagesStore.conversations.find(c => c.id === id)
     : null
 
   const formatDate = (date: Date) => {
@@ -48,8 +49,8 @@ const Messages = observer(() => {
   ]
 
   const handleSendMessage = () => {
-    if (selectedConversationId && messagesStore.composingMessage.trim()) {
-      messagesStore.sendMessage(selectedConversationId, messagesStore.composingMessage)
+    if (id && messagesStore.composingMessage.trim()) {
+      messagesStore.sendMessage(id, messagesStore.composingMessage)
     }
   }
 
@@ -131,9 +132,9 @@ const Messages = observer(() => {
               {messagesStore.filteredConversations.map((conversation) => (
                 <div
                   key={conversation.id}
-                  onClick={() => setSelectedConversationId(conversation.id)}
+                  onClick={() => navigate(`/messages/${conversation.id}`)}
                   className={`p-4 rounded-lg border-l-4 cursor-pointer transition-all ${getPriorityColor(conversation.priority)} ${
-                    selectedConversationId === conversation.id
+                    id === conversation.id
                       ? 'bg-accent border-primary border border-l-4'
                       : 'bg-card border-border hover:bg-accent/50 border border-l-4'
                   }`}

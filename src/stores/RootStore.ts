@@ -5,6 +5,7 @@ import { ContactsStore } from './ContactsStore'
 import { DealsStore } from './DealsStore'
 import { MessagesStore } from './MessagesStore'
 import { CalendarStore } from './CalendarStore'
+import { ThemeStore } from './ThemeStore'
 
 export class RootStore {
   userStore: UserStore
@@ -13,6 +14,7 @@ export class RootStore {
   dealsStore: DealsStore
   messagesStore: MessagesStore
   calendarStore: CalendarStore
+  themeStore: ThemeStore
 
   constructor() {
     this.userStore = new UserStore()
@@ -21,6 +23,7 @@ export class RootStore {
     this.dealsStore = new DealsStore()
     this.messagesStore = new MessagesStore()
     this.calendarStore = new CalendarStore()
+    this.themeStore = new ThemeStore()
     makeAutoObservable(this)
   }
 }
