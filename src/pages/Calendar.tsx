@@ -101,8 +101,8 @@ const Calendar = observer(() => {
     return (
       <div
         onClick={() => setSelectedEventId(event.id)}
-        className={`p-4 bg-slate-800 border-l-4 rounded-lg cursor-pointer hover:bg-slate-700/50 transition-all ${getPriorityColor(event.priority)} ${
-          selectedEventId === event.id ? 'ring-2 ring-blue-500' : ''
+        className={`p-4 bg-card border-l-4 rounded-lg cursor-pointer hover:bg-accent/50 transition-all border border-border ${getPriorityColor(event.priority)} ${
+          selectedEventId === event.id ? 'ring-2 ring-primary' : ''
         }`}
       >
         {/* Event Header */}
@@ -112,16 +112,16 @@ const Calendar = observer(() => {
               <Icon className="w-4 h-4" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-white text-sm truncate">{event.title}</h3>
+              <h3 className="font-semibold text-card-foreground text-sm truncate">{event.title}</h3>
               <div className="flex items-center space-x-2 mt-1">
-                <div className="flex items-center space-x-1 text-xs text-slate-400">
+                <div className="flex items-center space-x-1 text-xs text-muted-foreground">
                   <Clock className="w-3 h-3" />
                   <span>{formatTime(event.startTime)} - {formatTime(event.endTime)}</span>
                 </div>
                 {event.contactName && (
                   <>
-                    <span className="text-slate-600">•</span>
-                    <span className="text-xs text-slate-400 truncate">{event.contactName}</span>
+                    <span className="text-muted-foreground/50">•</span>
+                    <span className="text-xs text-muted-foreground truncate">{event.contactName}</span>
                   </>
                 )}
               </div>
@@ -137,14 +137,14 @@ const Calendar = observer(() => {
         {/* Event Details */}
         <div className="space-y-2">
           {event.contactCompany && (
-            <div className="flex items-center space-x-1 text-xs text-slate-500">
+            <div className="flex items-center space-x-1 text-xs text-muted-foreground/70">
               <Building className="w-3 h-3" />
               <span>{event.contactCompany}</span>
             </div>
           )}
 
           {(event.location || event.meetingLink) && (
-            <div className="flex items-center space-x-1 text-xs text-slate-500">
+            <div className="flex items-center space-x-1 text-xs text-muted-foreground/70">
               {event.location ? (
                 <>
                   <MapPin className="w-3 h-3" />
@@ -162,8 +162,8 @@ const Calendar = observer(() => {
           {/* AI Insights Count */}
           {event.aiInsights.length > 0 && (
             <div className="flex items-center space-x-1 text-xs">
-              <Brain className="w-3 h-3 text-purple-400" />
-              <span className="text-purple-400">{event.aiInsights.length} AI insight{event.aiInsights.length > 1 ? 's' : ''}</span>
+              <Brain className="w-3 h-3 text-primary" />
+              <span className="text-primary">{event.aiInsights.length} AI insight{event.aiInsights.length > 1 ? 's' : ''}</span>
             </div>
           )}
 
@@ -171,12 +171,12 @@ const Calendar = observer(() => {
           {event.tags.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-2">
               {event.tags.slice(0, 3).map((tag) => (
-                <span key={tag} className="px-2 py-0.5 bg-slate-700 text-slate-300 text-xs rounded">
+                <span key={tag} className="px-2 py-0.5 bg-secondary text-secondary-foreground text-xs rounded">
                   {tag}
                 </span>
               ))}
               {event.tags.length > 3 && (
-                <span className="px-2 py-0.5 bg-slate-700 text-slate-400 text-xs rounded">
+                <span className="px-2 py-0.5 bg-secondary text-muted-foreground text-xs rounded">
                   +{event.tags.length - 3}
                 </span>
               )}
@@ -196,12 +196,12 @@ const Calendar = observer(() => {
     <MainLayout>
       <div className="h-full flex">
         {/* Left Panel - Events List */}
-        <div className="w-96 border-r border-slate-800 bg-slate-900/50 flex flex-col">
+        <div className="w-96 border-r border-border bg-sidebar/50 flex flex-col">
           {/* Header */}
-          <div className="p-6 border-b border-slate-800">
+          <div className="p-6 border-b border-border">
             <div className="flex items-center justify-between mb-4">
-              <h1 className="text-2xl font-bold text-white">Calendar</h1>
-              <button className="flex items-center space-x-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-white text-sm transition-colors">
+              <h1 className="text-2xl font-bold text-foreground">Calendar</h1>
+              <button className="flex items-center space-x-2 px-3 py-1.5 bg-primary hover:bg-primary/90 rounded-lg text-primary-foreground text-sm transition-colors">
                 <Plus className="w-4 h-4" />
                 <span>New Event</span>
               </button>
@@ -222,25 +222,25 @@ const Calendar = observer(() => {
           </div>
 
           {/* Calendar Stats */}
-          <div className="p-4 border-b border-slate-800 bg-slate-900/30">
+          <div className="p-4 border-b border-border bg-card/30">
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-slate-800 rounded-lg p-3">
+              <div className="bg-card rounded-lg p-3 border border-border">
                 <div className="text-lg font-bold text-blue-400">{calendarStore.calendarStats.meetingsThisWeek}</div>
-                <div className="text-xs text-slate-400">Meetings This Week</div>
+                <div className="text-xs text-muted-foreground">Meetings This Week</div>
               </div>
-              <div className="bg-slate-800 rounded-lg p-3">
+              <div className="bg-card rounded-lg p-3 border border-border">
                 <div className="text-lg font-bold text-red-400">{calendarStore.calendarStats.highPriorityThisWeek}</div>
-                <div className="text-xs text-slate-400">High Priority</div>
+                <div className="text-xs text-muted-foreground">High Priority</div>
               </div>
             </div>
           </div>
 
           {/* Today's Events */}
-          <div className="p-4 border-b border-slate-800">
-            <h3 className="text-lg font-semibold text-white mb-3 flex items-center space-x-2">
+          <div className="p-4 border-b border-border">
+            <h3 className="text-lg font-semibold text-foreground mb-3 flex items-center space-x-2">
               <CalendarIcon className="w-5 h-5" />
               <span>Today</span>
-              <span className="px-2 py-1 bg-slate-700 text-slate-300 text-xs rounded">{todayEvents.length}</span>
+              <span className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded">{todayEvents.length}</span>
             </h3>
 
             {todayEvents.length > 0 ? (
@@ -251,15 +251,15 @@ const Calendar = observer(() => {
               </div>
             ) : (
               <div className="text-center py-6">
-                <CalendarIcon className="w-12 h-12 text-slate-600 mx-auto mb-2" />
-                <p className="text-slate-400 text-sm">No events today</p>
+                <CalendarIcon className="w-12 h-12 text-muted-foreground/50 mx-auto mb-2" />
+                <p className="text-muted-foreground text-sm">No events today</p>
               </div>
             )}
           </div>
 
           {/* Upcoming Events */}
           <div className="flex-1 overflow-y-auto p-4">
-            <h3 className="text-lg font-semibold text-white mb-3 flex items-center space-x-2">
+            <h3 className="text-lg font-semibold text-foreground mb-3 flex items-center space-x-2">
               <Clock className="w-5 h-5" />
               <span>Upcoming</span>
             </h3>
@@ -269,7 +269,7 @@ const Calendar = observer(() => {
                 {upcomingEvents.map((event) => (
                   <div key={event.id} className="relative">
                     <div className="absolute left-0 top-4 w-16 text-center">
-                      <div className="text-xs text-slate-400 font-medium">{formatShortDate(event.startTime)}</div>
+                      <div className="text-xs text-muted-foreground font-medium">{formatShortDate(event.startTime)}</div>
                     </div>
                     <div className="ml-20">
                       <EventCard event={event} />
@@ -279,8 +279,8 @@ const Calendar = observer(() => {
               </div>
             ) : (
               <div className="text-center py-6">
-                <Clock className="w-12 h-12 text-slate-600 mx-auto mb-2" />
-                <p className="text-slate-400 text-sm">No upcoming events</p>
+                <Clock className="w-12 h-12 text-muted-foreground/50 mx-auto mb-2" />
+                <p className="text-muted-foreground text-sm">No upcoming events</p>
               </div>
             )}
           </div>
@@ -291,7 +291,7 @@ const Calendar = observer(() => {
           {selectedEvent ? (
             <>
               {/* Event Header */}
-              <div className="p-6 border-b border-slate-800 bg-slate-900/30">
+              <div className="p-6 border-b border-border bg-card/30">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
@@ -302,8 +302,8 @@ const Calendar = observer(() => {
                         })()}
                       </div>
                       <div>
-                        <h2 className="text-2xl font-bold text-white">{selectedEvent.title}</h2>
-                        <div className="flex items-center space-x-4 text-slate-400">
+                        <h2 className="text-2xl font-bold text-foreground">{selectedEvent.title}</h2>
+                        <div className="flex items-center space-x-4 text-muted-foreground">
                           <div className="flex items-center space-x-1">
                             <Clock className="w-4 h-4" />
                             <span>{formatTime(selectedEvent.startTime)} - {formatTime(selectedEvent.endTime)}</span>
@@ -317,12 +317,12 @@ const Calendar = observer(() => {
                     </div>
 
                     {selectedEvent.description && (
-                      <p className="text-slate-400 mb-4">{selectedEvent.description}</p>
+                      <p className="text-muted-foreground mb-4">{selectedEvent.description}</p>
                     )}
 
                     <div className="flex items-center space-x-4">
                       {selectedEvent.contactName && (
-                        <div className="flex items-center space-x-2 text-slate-400">
+                        <div className="flex items-center space-x-2 text-muted-foreground">
                           <Users className="w-4 h-4" />
                           <span>{selectedEvent.contactName}</span>
                           {selectedEvent.contactCompany && (
@@ -335,7 +335,7 @@ const Calendar = observer(() => {
                       )}
 
                       {(selectedEvent.location || selectedEvent.meetingLink) && (
-                        <div className="flex items-center space-x-2 text-slate-400">
+                        <div className="flex items-center space-x-2 text-muted-foreground">
                           {selectedEvent.location ? (
                             <>
                               <MapPin className="w-4 h-4" />
@@ -354,11 +354,11 @@ const Calendar = observer(() => {
 
                   <div className="flex items-center space-x-3">
                     {selectedEvent.meetingLink && (
-                      <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white transition-colors">
+                      <button className="px-4 py-2 bg-primary hover:bg-primary/90 rounded-lg text-primary-foreground transition-colors">
                         Join Call
                       </button>
                     )}
-                    <button className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white transition-colors">
+                    <button className="px-4 py-2 bg-secondary hover:bg-secondary/80 rounded-lg text-secondary-foreground transition-colors">
                       Edit
                     </button>
                   </div>
@@ -371,18 +371,18 @@ const Calendar = observer(() => {
                   {/* Main Content */}
                   <div className="col-span-2 space-y-6">
                     {/* Meeting Preparation */}
-                    <div className="bg-slate-800 rounded-lg p-6">
-                      <h3 className="text-lg font-semibold text-white mb-4 flex items-center space-x-2">
-                        <Brain className="w-5 h-5 text-purple-400" />
+                    <div className="bg-card rounded-lg p-6 border border-border">
+                      <h3 className="text-lg font-semibold text-card-foreground mb-4 flex items-center space-x-2">
+                        <Brain className="w-5 h-5 text-primary" />
                         <span>AI Meeting Preparation</span>
                       </h3>
 
                       {/* Talking Points */}
                       <div className="mb-6">
-                        <h4 className="font-semibold text-white mb-3">Suggested Talking Points</h4>
+                        <h4 className="font-semibold text-card-foreground mb-3">Suggested Talking Points</h4>
                         <ul className="space-y-2">
                           {selectedEvent.preparation.suggestedTalkingPoints.map((point, index) => (
-                            <li key={index} className="flex items-start space-x-2 text-slate-300">
+                            <li key={index} className="flex items-start space-x-2 text-card-foreground">
                               <div className="w-2 h-2 bg-blue-400 rounded-full mt-2" />
                               <span>{point}</span>
                             </li>
@@ -393,11 +393,11 @@ const Calendar = observer(() => {
                       {/* Recent Interactions */}
                       {selectedEvent.preparation.recentInteractions.length > 0 && (
                         <div className="mb-6">
-                          <h4 className="font-semibold text-white mb-3">Recent Interactions</h4>
+                          <h4 className="font-semibold text-card-foreground mb-3">Recent Interactions</h4>
                           <div className="space-y-2">
                             {selectedEvent.preparation.recentInteractions.map((interaction, index) => (
-                              <div key={index} className="p-3 bg-slate-700/50 rounded-lg">
-                                <p className="text-sm text-slate-300">{interaction}</p>
+                              <div key={index} className="p-3 bg-accent/50 rounded-lg border border-border">
+                                <p className="text-sm text-card-foreground">{interaction}</p>
                               </div>
                             ))}
                           </div>
@@ -407,7 +407,7 @@ const Calendar = observer(() => {
                       {/* Deal Context */}
                       {selectedEvent.preparation.dealContext && (
                         <div className="mb-6">
-                          <h4 className="font-semibold text-white mb-3">Deal Context</h4>
+                          <h4 className="font-semibold text-card-foreground mb-3">Deal Context</h4>
                           <div className="p-3 bg-blue-900/20 border border-blue-700/30 rounded-lg">
                             <p className="text-sm text-blue-300">{selectedEvent.preparation.dealContext}</p>
                           </div>
@@ -417,10 +417,10 @@ const Calendar = observer(() => {
                       {/* Documents to Share */}
                       {selectedEvent.preparation.documentsToShare.length > 0 && (
                         <div>
-                          <h4 className="font-semibold text-white mb-3">Documents to Share</h4>
+                          <h4 className="font-semibold text-card-foreground mb-3">Documents to Share</h4>
                           <div className="space-y-2">
                             {selectedEvent.preparation.documentsToShare.map((doc, index) => (
-                              <div key={index} className="flex items-center space-x-2 p-2 bg-slate-700/30 rounded text-sm text-slate-300">
+                              <div key={index} className="flex items-center space-x-2 p-2 bg-accent/30 rounded text-sm text-card-foreground border border-border">
                                 <div className="w-2 h-2 bg-green-400 rounded-full" />
                                 <span>{doc}</span>
                               </div>
@@ -432,21 +432,21 @@ const Calendar = observer(() => {
 
                     {/* Attendees */}
                     {selectedEvent.attendees.length > 0 && (
-                      <div className="bg-slate-800 rounded-lg p-6">
-                        <h3 className="text-lg font-semibold text-white mb-4">Attendees</h3>
+                      <div className="bg-card rounded-lg p-6 border border-border">
+                        <h3 className="text-lg font-semibold text-card-foreground mb-4">Attendees</h3>
                         <div className="space-y-3">
                           {selectedEvent.attendees.map((attendee) => (
-                            <div key={attendee.id} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
+                            <div key={attendee.id} className="flex items-center justify-between p-3 bg-accent/50 rounded-lg border border-border">
                               <div>
-                                <div className="font-medium text-white">{attendee.name}</div>
-                                <div className="text-sm text-slate-400">{attendee.role}</div>
-                                <div className="text-sm text-slate-500">{attendee.email}</div>
+                                <div className="font-medium text-card-foreground">{attendee.name}</div>
+                                <div className="text-sm text-muted-foreground">{attendee.role}</div>
+                                <div className="text-sm text-muted-foreground/70">{attendee.email}</div>
                               </div>
                               <div className={`px-3 py-1 rounded-full text-xs font-medium ${
                                 attendee.status === 'accepted' ? 'bg-green-900/20 text-green-400' :
                                 attendee.status === 'declined' ? 'bg-red-900/20 text-red-400' :
                                 attendee.status === 'tentative' ? 'bg-yellow-900/20 text-yellow-400' :
-                                'bg-slate-700 text-slate-400'
+                                'bg-muted text-muted-foreground'
                               }`}>
                                 {attendee.status}
                               </div>
@@ -461,7 +461,7 @@ const Calendar = observer(() => {
                   <div className="space-y-6">
                     {/* AI Insights */}
                     <div>
-                      <h3 className="text-lg font-semibold text-white mb-4">AI Insights</h3>
+                      <h3 className="text-lg font-semibold text-foreground mb-4">AI Insights</h3>
                       <div className="space-y-4">
                         {selectedEvent.aiInsights.map((insight) => (
                           <AIInsight
@@ -480,12 +480,12 @@ const Calendar = observer(() => {
                     </div>
 
                     {/* Event Status */}
-                    <div className="bg-slate-800 rounded-lg p-4">
-                      <h4 className="font-semibold text-white mb-3">Event Status</h4>
+                    <div className="bg-card rounded-lg p-4 border border-border">
+                      <h4 className="font-semibold text-card-foreground mb-3">Event Status</h4>
                       <div className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
                         selectedEvent.status === 'confirmed' ? 'bg-green-900/20 text-green-400' :
                         selectedEvent.status === 'scheduled' ? 'bg-blue-900/20 text-blue-400' :
-                        selectedEvent.status === 'completed' ? 'bg-slate-700 text-slate-400' :
+                        selectedEvent.status === 'completed' ? 'bg-muted text-muted-foreground' :
                         selectedEvent.status === 'cancelled' ? 'bg-red-900/20 text-red-400' :
                         'bg-yellow-900/20 text-yellow-400'
                       }`}>
@@ -495,11 +495,11 @@ const Calendar = observer(() => {
 
                     {/* Personal Notes */}
                     {selectedEvent.preparation.personalNotes.length > 0 && (
-                      <div className="bg-slate-800 rounded-lg p-4">
-                        <h4 className="font-semibold text-white mb-3">Personal Notes</h4>
+                      <div className="bg-card rounded-lg p-4 border border-border">
+                        <h4 className="font-semibold text-card-foreground mb-3">Personal Notes</h4>
                         <div className="space-y-2">
                           {selectedEvent.preparation.personalNotes.map((note, index) => (
-                            <p key={index} className="text-sm text-slate-400">• {note}</p>
+                            <p key={index} className="text-sm text-muted-foreground">• {note}</p>
                           ))}
                         </div>
                       </div>
@@ -523,9 +523,9 @@ const Calendar = observer(() => {
           ) : (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
-                <CalendarIcon className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-white mb-2">Select an Event</h3>
-                <p className="text-slate-400">Choose an event from the list to view details and AI insights.</p>
+                <CalendarIcon className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-foreground mb-2">Select an Event</h3>
+                <p className="text-muted-foreground">Choose an event from the list to view details and AI insights.</p>
               </div>
             </div>
           )}

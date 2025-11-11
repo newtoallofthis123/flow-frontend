@@ -8,8 +8,8 @@ const Dashboard = observer(() => {
   return (
     <MainLayout>
       <div className="p-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Command Center</h1>
-        <p className="text-slate-400 mb-8">AI-powered insights and recommendations</p>
+        <h1 className="text-3xl font-bold text-foreground mb-2">Command Center</h1>
+        <p className="text-muted-foreground mb-8">AI-powered insights and recommendations</p>
 
         <div className="space-y-6">
           <AIForecastCard />

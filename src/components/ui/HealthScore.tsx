@@ -106,7 +106,7 @@ const HealthScore = ({
           <div className="flex items-center space-x-2">
             <Heart className={`${sizeClasses.icon} ${getScoreColor()}`} />
             {showLabel && (
-              <span className="text-slate-300 font-medium">Health</span>
+              <span className="text-card-foreground font-medium">Health</span>
             )}
           </div>
           <div className="flex items-center space-x-1">
@@ -118,7 +118,7 @@ const HealthScore = ({
             )}
           </div>
         </div>
-        <div className="w-full bg-slate-700 rounded-full h-2">
+        <div className="w-full bg-muted rounded-full h-2">
           <div
             className={`h-2 rounded-full ${getScoreColor().replace('text-', 'bg-')}`}
             style={{ width: `${score}%` }}
@@ -144,7 +144,7 @@ const HealthScore = ({
           fill="none"
           stroke="currentColor"
           strokeWidth="3"
-          className="text-slate-700"
+          className="text-muted"
         />
         {/* Progress circle */}
         <circle
@@ -186,7 +186,7 @@ const HealthScore = ({
       {/* Label */}
       {showLabel && (
         <div className="absolute -bottom-6 text-center">
-          <span className="text-slate-400 text-xs font-medium">Health Score</span>
+          <span className="text-muted-foreground text-xs font-medium">Health Score</span>
         </div>
       )}
     </div>

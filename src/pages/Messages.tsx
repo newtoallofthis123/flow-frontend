@@ -81,12 +81,12 @@ const Messages = observer(() => {
     <MainLayout>
       <div className="h-full flex">
         {/* Left Panel - Conversation List */}
-        <div className="w-96 border-r border-slate-800 bg-slate-900/50 flex flex-col">
+        <div className="w-96 border-r border-border bg-sidebar/50 flex flex-col">
           {/* Header */}
-          <div className="p-6 border-b border-slate-800">
+          <div className="p-6 border-b border-border">
             <div className="flex items-center justify-between mb-4">
-              <h1 className="text-2xl font-bold text-white">Messages</h1>
-              <div className="flex items-center space-x-2 text-sm text-slate-400">
+              <h1 className="text-2xl font-bold text-foreground">Messages</h1>
+              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                 <MessageSquare className="w-4 h-4" />
                 <span>{messagesStore.messageStats.total}</span>
               </div>
@@ -107,20 +107,20 @@ const Messages = observer(() => {
           </div>
 
           {/* Sentiment Overview */}
-          <div className="p-4 border-b border-slate-800 bg-slate-900/30">
-            <h3 className="text-sm font-semibold text-white mb-3">Overall Sentiment</h3>
+          <div className="p-4 border-b border-border bg-card/30">
+            <h3 className="text-sm font-semibold text-foreground mb-3">Overall Sentiment</h3>
             <div className="grid grid-cols-3 gap-2">
               <div className="bg-green-900/20 border border-green-700/30 rounded p-2 text-center">
                 <div className="text-green-400 font-bold">{Math.round(messagesStore.sentimentOverview.positive)}%</div>
-                <div className="text-xs text-slate-400">Positive</div>
+                <div className="text-xs text-muted-foreground">Positive</div>
               </div>
               <div className="bg-yellow-900/20 border border-yellow-700/30 rounded p-2 text-center">
                 <div className="text-yellow-400 font-bold">{Math.round(messagesStore.sentimentOverview.neutral)}%</div>
-                <div className="text-xs text-slate-400">Neutral</div>
+                <div className="text-xs text-muted-foreground">Neutral</div>
               </div>
               <div className="bg-red-900/20 border border-red-700/30 rounded p-2 text-center">
                 <div className="text-red-400 font-bold">{Math.round(messagesStore.sentimentOverview.negative)}%</div>
-                <div className="text-xs text-slate-400">Negative</div>
+                <div className="text-xs text-muted-foreground">Negative</div>
               </div>
             </div>
           </div>
@@ -134,22 +134,22 @@ const Messages = observer(() => {
                   onClick={() => setSelectedConversationId(conversation.id)}
                   className={`p-4 rounded-lg border-l-4 cursor-pointer transition-all ${getPriorityColor(conversation.priority)} ${
                     selectedConversationId === conversation.id
-                      ? 'bg-slate-700 border-blue-500 border border-l-4'
-                      : 'bg-slate-800 border-slate-700 hover:bg-slate-700/50 border border-l-4'
+                      ? 'bg-accent border-primary border border-l-4'
+                      : 'bg-card border-border hover:bg-accent/50 border border-l-4'
                   }`}
                 >
                   {/* Conversation Header */}
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center space-x-2 mb-1">
-                        <h3 className="text-sm font-semibold text-white truncate">{conversation.contactName}</h3>
+                        <h3 className="text-sm font-semibold text-card-foreground truncate">{conversation.contactName}</h3>
                         {conversation.unreadCount > 0 && (
-                          <span className="px-2 py-0.5 bg-blue-500 text-white text-xs rounded-full">
+                          <span className="px-2 py-0.5 bg-primary text-primary-foreground text-xs rounded-full">
                             {conversation.unreadCount}
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center space-x-1 text-xs text-slate-500">
+                      <div className="flex items-center space-x-1 text-xs text-muted-foreground/70">
                         <Building className="w-3 h-3" />
                         <span className="truncate">{conversation.contactCompany}</span>
                       </div>
@@ -160,28 +160,28 @@ const Messages = observer(() => {
                         size="sm"
                         variant="minimal"
                       />
-                      <span className="text-xs text-slate-400">
+                      <span className="text-xs text-muted-foreground">
                         {getSentimentTrendIcon(conversation.sentimentTrend)}
                       </span>
-                      <span className="text-xs text-slate-400">{formatDate(conversation.lastMessage)}</span>
+                      <span className="text-xs text-muted-foreground">{formatDate(conversation.lastMessage)}</span>
                     </div>
                   </div>
 
                   {/* AI Summary */}
                   <div className="mb-3">
-                    <p className="text-sm text-slate-400 line-clamp-2">{conversation.aiSummary}</p>
+                    <p className="text-sm text-muted-foreground line-clamp-2">{conversation.aiSummary}</p>
                   </div>
 
                   {/* Tags */}
                   {conversation.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1">
                       {conversation.tags.slice(0, 3).map((tag) => (
-                        <span key={tag} className="px-2 py-0.5 bg-slate-700 text-slate-300 text-xs rounded">
+                        <span key={tag} className="px-2 py-0.5 bg-secondary text-secondary-foreground text-xs rounded">
                           {tag}
                         </span>
                       ))}
                       {conversation.tags.length > 3 && (
-                        <span className="px-2 py-0.5 bg-slate-700 text-slate-400 text-xs rounded">
+                        <span className="px-2 py-0.5 bg-secondary text-muted-foreground text-xs rounded">
                           +{conversation.tags.length - 3}
                         </span>
                       )}
@@ -198,17 +198,17 @@ const Messages = observer(() => {
           {selectedConversation ? (
             <>
               {/* Conversation Header */}
-              <div className="p-6 border-b border-slate-800 bg-slate-900/30">
+              <div className="p-6 border-b border-border bg-card/30">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-4">
                     <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
-                      <span className="text-white font-bold">
+                      <span className="text-primary-foreground font-bold">
                         {selectedConversation.contactName.charAt(0)}
                       </span>
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-white">{selectedConversation.contactName}</h2>
-                      <div className="flex items-center space-x-1 text-slate-400">
+                      <h2 className="text-xl font-bold text-foreground">{selectedConversation.contactName}</h2>
+                      <div className="flex items-center space-x-1 text-muted-foreground">
                         <Building className="w-4 h-4" />
                         <span>{selectedConversation.contactCompany}</span>
                       </div>
@@ -224,13 +224,13 @@ const Messages = observer(() => {
                       />
                     </div>
                     <div className="flex items-center space-x-2">
-                      <button className="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white transition-colors">
+                      <button className="p-2 bg-secondary hover:bg-secondary/80 rounded-lg text-secondary-foreground transition-colors">
                         <Phone className="w-4 h-4" />
                       </button>
-                      <button className="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white transition-colors">
+                      <button className="p-2 bg-secondary hover:bg-secondary/80 rounded-lg text-secondary-foreground transition-colors">
                         <Mail className="w-4 h-4" />
                       </button>
-                      <button className="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white transition-colors">
+                      <button className="p-2 bg-secondary hover:bg-secondary/80 rounded-lg text-secondary-foreground transition-colors">
                         <Calendar className="w-4 h-4" />
                       </button>
                     </div>
@@ -244,11 +244,11 @@ const Messages = observer(() => {
                   {selectedConversation.messages.map((message) => (
                     <div key={message.id} className="flex space-x-4">
                       {/* Avatar */}
-                      <div className="w-8 h-8 bg-slate-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <div className="w-8 h-8 bg-secondary rounded-lg flex items-center justify-center flex-shrink-0">
                         {message.senderType === 'user' ? (
                           <User className="w-4 h-4 text-blue-400" />
                         ) : (
-                          <span className="text-white text-sm">{message.senderName.charAt(0)}</span>
+                          <span className="text-card-foreground text-sm">{message.senderName.charAt(0)}</span>
                         )}
                       </div>
 
@@ -257,11 +257,11 @@ const Messages = observer(() => {
                         {/* Message Header */}
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center space-x-2">
-                            <span className="font-semibold text-white text-sm">{message.senderName}</span>
+                            <span className="font-semibold text-card-foreground text-sm">{message.senderName}</span>
                             {message.subject && (
                               <>
-                                <span className="text-slate-500">•</span>
-                                <span className="text-slate-400 text-sm">{message.subject}</span>
+                                <span className="text-muted-foreground/70">•</span>
+                                <span className="text-muted-foreground text-sm">{message.subject}</span>
                               </>
                             )}
                             <SentimentIndicator
@@ -272,35 +272,35 @@ const Messages = observer(() => {
                               showConfidence={true}
                             />
                           </div>
-                          <div className="flex items-center space-x-2 text-xs text-slate-400">
+                          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                             <Clock className="w-3 h-3" />
                             <span>{formatTime(message.timestamp)}</span>
                           </div>
                         </div>
 
                         {/* Message Body */}
-                        <div className="bg-slate-800 rounded-lg p-4 mb-3">
-                          <p className="text-slate-300 leading-relaxed">{message.content}</p>
+                        <div className="bg-card rounded-lg p-4 mb-3 border border-border">
+                          <p className="text-card-foreground leading-relaxed">{message.content}</p>
                         </div>
 
                         {/* AI Analysis */}
                         {message.aiAnalysis && (
-                          <div className="bg-slate-700/30 rounded-lg p-4">
+                          <div className="bg-accent/30 rounded-lg p-4 border border-border">
                             <div className="flex items-start space-x-2 mb-3">
-                              <Brain className="w-4 h-4 text-purple-400 mt-0.5" />
+                              <Brain className="w-4 h-4 text-primary mt-0.5" />
                               <div className="flex-1">
-                                <h4 className="text-sm font-semibold text-white mb-2">AI Analysis</h4>
+                                <h4 className="text-sm font-semibold text-card-foreground mb-2">AI Analysis</h4>
                                 <div className="grid grid-cols-2 gap-4 mb-3">
                                   <div>
-                                    <span className="text-xs text-slate-400 uppercase tracking-wide">Emotional Tone</span>
-                                    <p className="text-sm text-slate-300">{message.aiAnalysis.emotionalTone}</p>
+                                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Emotional Tone</span>
+                                    <p className="text-sm text-card-foreground">{message.aiAnalysis.emotionalTone}</p>
                                   </div>
                                   <div>
-                                    <span className="text-xs text-slate-400 uppercase tracking-wide">Business Intent</span>
-                                    <p className="text-sm text-slate-300 capitalize">{message.aiAnalysis.businessIntent}</p>
+                                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Business Intent</span>
+                                    <p className="text-sm text-card-foreground capitalize">{message.aiAnalysis.businessIntent}</p>
                                   </div>
                                   <div>
-                                    <span className="text-xs text-slate-400 uppercase tracking-wide">Urgency Level</span>
+                                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Urgency Level</span>
                                     <p className={`text-sm font-medium capitalize ${
                                       message.aiAnalysis.urgencyLevel === 'high' ? 'text-red-400' :
                                       message.aiAnalysis.urgencyLevel === 'medium' ? 'text-yellow-400' :
@@ -310,14 +310,14 @@ const Messages = observer(() => {
                                     </p>
                                   </div>
                                   <div>
-                                    <span className="text-xs text-slate-400 uppercase tracking-wide">Response Time</span>
-                                    <p className="text-sm text-slate-300">{message.aiAnalysis.responseTime}</p>
+                                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Response Time</span>
+                                    <p className="text-sm text-card-foreground">{message.aiAnalysis.responseTime}</p>
                                   </div>
                                 </div>
 
                                 {message.aiAnalysis.keyTopics.length > 0 && (
                                   <div className="mb-3">
-                                    <span className="text-xs text-slate-400 uppercase tracking-wide">Key Topics</span>
+                                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Key Topics</span>
                                     <div className="flex flex-wrap gap-1 mt-1">
                                       {message.aiAnalysis.keyTopics.map((topic) => (
                                         <span key={topic} className="px-2 py-0.5 bg-blue-900/20 border border-blue-700/30 text-blue-400 text-xs rounded">
@@ -330,10 +330,10 @@ const Messages = observer(() => {
 
                                 {message.aiAnalysis.actionItems.length > 0 && (
                                   <div>
-                                    <span className="text-xs text-slate-400 uppercase tracking-wide">Action Items</span>
+                                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Action Items</span>
                                     <ul className="mt-1 space-y-1">
                                       {message.aiAnalysis.actionItems.map((item, index) => (
-                                        <li key={index} className="text-sm text-slate-300 flex items-center space-x-2">
+                                        <li key={index} className="text-sm text-card-foreground flex items-center space-x-2">
                                           <div className="w-1.5 h-1.5 bg-blue-400 rounded-full" />
                                           <span>{item}</span>
                                         </li>
@@ -345,12 +345,12 @@ const Messages = observer(() => {
                             </div>
 
                             {message.aiAnalysis.suggestedResponse && (
-                              <div className="border-t border-slate-600 pt-3">
+                              <div className="border-t border-border pt-3">
                                 <div className="flex items-center space-x-2 mb-2">
                                   <Lightbulb className="w-4 h-4 text-yellow-400" />
-                                  <span className="text-sm font-medium text-white">Suggested Response</span>
+                                  <span className="text-sm font-medium text-card-foreground">Suggested Response</span>
                                 </div>
-                                <p className="text-sm text-slate-300 bg-slate-800 rounded p-2">
+                                <p className="text-sm text-card-foreground bg-card rounded p-2 border border-border">
                                   {message.aiAnalysis.suggestedResponse}
                                 </p>
                               </div>
@@ -364,24 +364,24 @@ const Messages = observer(() => {
               </div>
 
               {/* Message Compose */}
-              <div className="p-6 border-t border-slate-800 bg-slate-900/30">
+              <div className="p-6 border-t border-border bg-card/30">
                 {/* Smart Compose Suggestions */}
                 {messagesStore.smartCompose && (
-                  <div className="mb-4 p-4 bg-purple-900/20 border border-purple-700/30 rounded-lg">
+                  <div className="mb-4 p-4 bg-accent/20 border border-border rounded-lg">
                     <div className="flex items-center space-x-2 mb-3">
-                      <Brain className="w-4 h-4 text-purple-400" />
-                      <span className="text-sm font-semibold text-white">AI Writing Assistant</span>
+                      <Brain className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-semibold text-card-foreground">AI Writing Assistant</span>
                     </div>
 
                     {messagesStore.smartCompose.suggestions.length > 0 && (
                       <div className="mb-3">
-                        <span className="text-xs text-purple-300 uppercase tracking-wide">Quick Suggestions</span>
+                        <span className="text-xs text-primary uppercase tracking-wide">Quick Suggestions</span>
                         <div className="flex flex-wrap gap-2 mt-1">
                           {messagesStore.smartCompose.suggestions.map((suggestion, index) => (
                             <button
                               key={index}
                               onClick={() => messagesStore.setComposingMessage(suggestion)}
-                              className="px-3 py-1.5 bg-purple-800/30 hover:bg-purple-700/30 border border-purple-600/30 rounded-full text-purple-300 text-xs transition-colors"
+                              className="px-3 py-1.5 bg-secondary hover:bg-accent border border-border rounded-full text-card-foreground text-xs transition-colors"
                             >
                               {suggestion}
                             </button>
@@ -393,13 +393,13 @@ const Messages = observer(() => {
                     <div className="flex items-center space-x-4 text-xs">
                       <div className="flex items-center space-x-1">
                         <Zap className="w-3 h-3 text-yellow-400" />
-                        <span className="text-slate-400">Current tone: {messagesStore.smartCompose.toneAdjustments.current}</span>
+                        <span className="text-muted-foreground">Current tone: {messagesStore.smartCompose.toneAdjustments.current}</span>
                       </div>
                       <div className="flex space-x-2">
                         {messagesStore.smartCompose.toneAdjustments.alternatives.map((alt, index) => (
                           <button
                             key={index}
-                            className="text-blue-400 hover:text-blue-300 transition-colors"
+                            className="text-primary hover:text-primary/80 transition-colors"
                             title={alt.preview}
                           >
                             {alt.tone}
@@ -418,13 +418,13 @@ const Messages = observer(() => {
                         value={messagesStore.composingMessage}
                         onChange={(e) => messagesStore.setComposingMessage(e.target.value)}
                         placeholder="Type your message..."
-                        className="w-full h-24 p-4 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full h-24 p-4 bg-secondary border border-border rounded-lg text-foreground placeholder-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
                       />
                       <div className="absolute bottom-2 right-2 flex items-center space-x-2">
-                        <button className="text-slate-400 hover:text-white transition-colors">
+                        <button className="text-muted-foreground hover:text-foreground transition-colors">
                           <Paperclip className="w-4 h-4" />
                         </button>
-                        <button className="text-slate-400 hover:text-white transition-colors">
+                        <button className="text-muted-foreground hover:text-foreground transition-colors">
                           <Smile className="w-4 h-4" />
                         </button>
                       </div>
@@ -434,7 +434,7 @@ const Messages = observer(() => {
                     <button
                       onClick={handleSendMessage}
                       disabled={!messagesStore.composingMessage.trim()}
-                      className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 disabled:text-slate-500 rounded-lg text-white font-medium transition-colors flex items-center space-x-2"
+                      className="px-6 py-3 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground rounded-lg text-primary-foreground font-medium transition-colors flex items-center space-x-2"
                     >
                       <Send className="w-4 h-4" />
                       <span>Send</span>
@@ -446,9 +446,9 @@ const Messages = observer(() => {
           ) : (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
-                <MessageSquare className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-white mb-2">Select a Conversation</h3>
-                <p className="text-slate-400">Choose a conversation from the list to view messages and AI insights.</p>
+                <MessageSquare className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-foreground mb-2">Select a Conversation</h3>
+                <p className="text-muted-foreground">Choose a conversation from the list to view messages and AI insights.</p>
               </div>
             </div>
           )}

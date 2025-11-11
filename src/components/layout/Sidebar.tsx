@@ -29,13 +29,13 @@ const Sidebar = () => {
   }
 
   return (
-    <div className="w-64 bg-slate-900 border-r border-slate-800">
+    <div className="w-64 bg-sidebar border-r border-sidebar-border">
       <div className="p-6">
         <Link to="/dashboard" className="flex items-center space-x-2 mb-8 hover:opacity-80 transition-opacity">
-          <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">F</span>
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+            <span className="text-primary-foreground font-bold text-sm">F</span>
           </div>
-          <span className="text-xl font-bold text-white">FLOW</span>
+          <span className="text-xl font-bold text-sidebar-foreground">FLOW</span>
         </Link>
 
         <nav className="space-y-2">
@@ -49,16 +49,16 @@ const Sidebar = () => {
                 to={item.path}
                 className={`flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors ${
                   active
-                    ? 'bg-slate-800 text-white'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-                } ${item.highlight ? 'bg-purple-900/20 border border-purple-700/30' : ''}`}
+                    ? 'bg-sidebar-accent text-sidebar-foreground'
+                    : 'text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent/50'
+                } ${item.highlight ? 'bg-accent/20 border border-border' : ''}`}
               >
                 <div className="flex items-center space-x-3">
-                  <Icon className={`w-5 h-5 ${item.highlight ? 'text-purple-400' : active ? 'text-white' : ''}`} />
+                  <Icon className={`w-5 h-5 ${item.highlight ? 'text-primary' : active ? 'text-sidebar-foreground' : ''}`} />
                   <span className="text-sm font-medium">{item.label}</span>
                 </div>
                 {item.badge && (
-                  <span className="px-2 py-1 bg-blue-500 text-white text-xs rounded-full">
+                  <span className="px-2 py-1 bg-primary text-primary-foreground text-xs rounded-full">
                     {item.badge}
                   </span>
                 )}

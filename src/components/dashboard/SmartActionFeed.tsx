@@ -43,13 +43,13 @@ const SmartActionFeed = observer(() => {
   const getButtonStyles = (type: string) => {
     switch (type) {
       case 'primary':
-        return 'bg-blue-600 hover:bg-blue-700 text-white'
+        return 'bg-primary hover:bg-primary/90 text-primary-foreground'
       case 'secondary':
-        return 'bg-slate-600 hover:bg-slate-700 text-slate-200'
+        return 'bg-secondary hover:bg-secondary/80 text-secondary-foreground'
       case 'dismiss':
-        return 'bg-slate-700 hover:bg-slate-600 text-slate-300'
+        return 'bg-muted hover:bg-muted/80 text-muted-foreground'
       default:
-        return 'bg-slate-600 hover:bg-slate-700 text-slate-200'
+        return 'bg-secondary hover:bg-secondary/80 text-secondary-foreground'
     }
   }
 
@@ -62,8 +62,8 @@ const SmartActionFeed = observer(() => {
   }
 
   return (
-    <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
-      <h2 className="text-xl font-semibold text-white mb-6">Smart Action Feed</h2>
+    <div className="bg-card rounded-lg p-6 border border-border">
+      <h2 className="text-xl font-semibold text-card-foreground mb-6">Smart Action Feed</h2>
 
       <div className="space-y-4">
         {dashboardStore.actionItems.map((item) => {
@@ -71,12 +71,12 @@ const SmartActionFeed = observer(() => {
           return (
             <div
               key={item.id}
-              className={`border-l-4 pl-4 pr-4 py-4 rounded-r-lg ${getItemStyles(item.type)}`}
+              className={`border-l-4 pl-4 pr-4 py-4 rounded-r-lg bg-card/50 ${getItemStyles(item.type)}`}
             >
               <div className="flex items-start space-x-3">
                 <Icon className={`w-5 h-5 mt-0.5 ${getIconColor(item.type)}`} />
                 <div className="flex-1">
-                  <p className="text-slate-200 text-sm mb-3">{item.title}</p>
+                  <p className="text-card-foreground text-sm mb-3">{item.title}</p>
                   <div className="flex space-x-2">
                     {item.actions.map((action, index) => (
                       <button

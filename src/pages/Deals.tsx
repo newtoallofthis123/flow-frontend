@@ -87,24 +87,24 @@ const Deals = observer(() => {
   const DealCard = ({ deal }: { deal: Deal }) => (
     <div
       onClick={() => setSelectedDealId(deal.id)}
-      className={`p-4 bg-slate-800 border border-slate-700 rounded-lg cursor-pointer hover:bg-slate-700/50 transition-all ${
-        selectedDealId === deal.id ? 'ring-2 ring-blue-500' : ''
+      className={`p-4 bg-card border border-border rounded-lg cursor-pointer hover:bg-accent/50 transition-all ${
+        selectedDealId === deal.id ? 'ring-2 ring-primary' : ''
       }`}
     >
       {/* Deal Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-white text-sm truncate mb-1">{deal.title}</h4>
-          <div className="flex items-center space-x-1 text-xs text-slate-400">
+          <h4 className="font-semibold text-card-foreground text-sm truncate mb-1">{deal.title}</h4>
+          <div className="flex items-center space-x-1 text-xs text-muted-foreground">
             <User className="w-3 h-3" />
             <span className="truncate">{deal.contactName}</span>
           </div>
-          <div className="flex items-center space-x-1 text-xs text-slate-500">
+          <div className="flex items-center space-x-1 text-xs text-muted-foreground/70">
             <Building className="w-3 h-3" />
             <span className="truncate">{deal.company}</span>
           </div>
         </div>
-        <button className="text-slate-400 hover:text-white transition-colors">
+        <button className="text-muted-foreground hover:text-foreground transition-colors">
           <MoreHorizontal className="w-4 h-4" />
         </button>
       </div>
@@ -124,7 +124,7 @@ const Deals = observer(() => {
       {/* Deal Info */}
       <div className="space-y-2 mb-3">
         <div className="flex items-center justify-between text-xs">
-          <div className="flex items-center space-x-1 text-slate-400">
+          <div className="flex items-center space-x-1 text-muted-foreground">
             <Calendar className="w-3 h-3" />
             <span>{formatDate(deal.expectedCloseDate)}</span>
           </div>
@@ -158,12 +158,12 @@ const Deals = observer(() => {
       {deal.tags.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {deal.tags.slice(0, 2).map((tag) => (
-            <span key={tag} className="px-2 py-0.5 bg-slate-700 text-slate-300 text-xs rounded">
+            <span key={tag} className="px-2 py-0.5 bg-secondary text-secondary-foreground text-xs rounded">
               {tag}
             </span>
           ))}
           {deal.tags.length > 2 && (
-            <span className="px-2 py-0.5 bg-slate-700 text-slate-400 text-xs rounded">
+            <span className="px-2 py-0.5 bg-secondary text-muted-foreground text-xs rounded">
               +{deal.tags.length - 2}
             </span>
           )}
@@ -179,27 +179,27 @@ const Deals = observer(() => {
     return (
       <div className="flex-1 min-w-80">
         {/* Column Header */}
-        <div className="bg-slate-800 rounded-lg p-4 mb-4 border border-slate-700">
+        <div className="bg-card rounded-lg p-4 mb-4 border border-border">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center space-x-2">
               <h3 className={`font-semibold ${getStageColor(stage)}`}>
                 {getStageTitle(stage)}
               </h3>
-              <span className="px-2 py-1 bg-slate-700 text-slate-300 text-xs rounded">
+              <span className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded">
                 {deals.length}
               </span>
             </div>
-            <button className="text-slate-400 hover:text-white transition-colors">
+            <button className="text-muted-foreground hover:text-foreground transition-colors">
               <Plus className="w-4 h-4" />
             </button>
           </div>
 
           <div className="flex items-center justify-between text-sm">
-            <span className="text-slate-400">{formatCurrency(totalValue)}</span>
+            <span className="text-muted-foreground">{formatCurrency(totalValue)}</span>
             {stageStats && (
               <div className="flex items-center space-x-1">
-                <Brain className="w-3 h-3 text-purple-400" />
-                <span className="text-purple-400">{stageStats.avgProbability}%</span>
+                <Brain className="w-3 h-3 text-primary" />
+                <span className="text-primary">{stageStats.avgProbability}%</span>
               </div>
             )}
           </div>
@@ -219,11 +219,11 @@ const Deals = observer(() => {
     <MainLayout>
       <div className="h-full flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b border-slate-800 bg-slate-900/30">
+        <div className="p-6 border-b border-border bg-card/30">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-4">
-              <h1 className="text-3xl font-bold text-white">Pipeline</h1>
-              <div className="flex items-center space-x-4 text-sm text-slate-400">
+              <h1 className="text-3xl font-bold text-foreground">Pipeline</h1>
+              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                 <div className="flex items-center space-x-1">
                   <Target className="w-4 h-4" />
                   <span>{dealsStore.filteredDeals.length} active deals</span>
@@ -240,7 +240,7 @@ const Deals = observer(() => {
                 <div className="text-2xl font-bold text-green-400">
                   {formatCurrency(dealsStore.forecastData.weightedForecast)}
                 </div>
-                <div className="text-sm text-slate-400">Weighted Forecast</div>
+                <div className="text-sm text-muted-foreground">Weighted Forecast</div>
               </div>
             </div>
           </div>
@@ -259,26 +259,26 @@ const Deals = observer(() => {
         </div>
 
         {/* Pipeline Stats */}
-        <div className="p-6 border-b border-slate-800 bg-slate-900/20">
+        <div className="p-6 border-b border-border bg-card/20">
           <div className="grid grid-cols-4 gap-6">
             {dealsStore.stageStats.map((stat) => (
-              <div key={stat.stage} className="bg-slate-800 rounded-lg p-4">
+              <div key={stat.stage} className="bg-card rounded-lg p-4 border border-border">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className={`font-semibold ${getStageColor(stat.stage)}`}>
                     {getStageTitle(stat.stage)}
                   </h4>
-                  <span className="px-2 py-1 bg-slate-700 text-slate-300 text-xs rounded">
+                  <span className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded">
                     {stat.count}
                   </span>
                 </div>
-                <div className="text-lg font-bold text-white mb-1">
+                <div className="text-lg font-bold text-card-foreground mb-1">
                   {formatCurrency(stat.totalValue)}
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-400">Avg: {stat.avgDaysInStage}d</span>
+                  <span className="text-muted-foreground">Avg: {stat.avgDaysInStage}d</span>
                   <div className="flex items-center space-x-1">
-                    <Brain className="w-3 h-3 text-purple-400" />
-                    <span className="text-purple-400">{stat.avgProbability}%</span>
+                    <Brain className="w-3 h-3 text-primary" />
+                    <span className="text-primary">{stat.avgProbability}%</span>
                   </div>
                 </div>
               </div>
@@ -304,24 +304,24 @@ const Deals = observer(() => {
 
       {/* Deal Detail Sidebar */}
       {selectedDeal && (
-        <div className="fixed right-0 top-0 bottom-0 w-96 bg-slate-900 border-l border-slate-800 z-50 overflow-y-auto">
+        <div className="fixed right-0 top-0 bottom-0 w-96 bg-sidebar border-l border-sidebar-border z-50 overflow-y-auto">
           <div className="p-6">
             {/* Deal Header */}
             <div className="flex items-start justify-between mb-6">
               <div className="flex-1 min-w-0">
-                <h3 className="text-xl font-bold text-white mb-2">{selectedDeal.title}</h3>
-                <div className="flex items-center space-x-2 text-slate-400 mb-2">
+                <h3 className="text-xl font-bold text-sidebar-foreground mb-2">{selectedDeal.title}</h3>
+                <div className="flex items-center space-x-2 text-muted-foreground mb-2">
                   <User className="w-4 h-4" />
                   <span>{selectedDeal.contactName}</span>
                 </div>
-                <div className="flex items-center space-x-2 text-slate-500">
+                <div className="flex items-center space-x-2 text-muted-foreground/70">
                   <Building className="w-4 h-4" />
                   <span>{selectedDeal.company}</span>
                 </div>
               </div>
               <button
                 onClick={() => setSelectedDealId(null)}
-                className="text-slate-400 hover:text-white transition-colors"
+                className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 ×
               </button>
@@ -329,13 +329,13 @@ const Deals = observer(() => {
 
             {/* Deal Stats */}
             <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-slate-800 rounded-lg p-4">
+              <div className="bg-card rounded-lg p-4 border border-border">
                 <div className="text-2xl font-bold text-green-400 mb-1">
                   {formatCurrency(selectedDeal.value)}
                 </div>
-                <div className="text-sm text-slate-400">Deal Value</div>
+                <div className="text-sm text-muted-foreground">Deal Value</div>
               </div>
-              <div className="bg-slate-800 rounded-lg p-4">
+              <div className="bg-card rounded-lg p-4 border border-border">
                 <div className="flex items-center space-x-2 mb-1">
                   <ProbabilityBadge
                     probability={selectedDeal.probability}
@@ -344,25 +344,25 @@ const Deals = observer(() => {
                     showIcon={false}
                   />
                 </div>
-                <div className="text-sm text-slate-400">Close Probability</div>
+                <div className="text-sm text-muted-foreground">Close Probability</div>
               </div>
             </div>
 
             {/* Expected Close Date */}
-            <div className="bg-slate-800 rounded-lg p-4 mb-6">
+            <div className="bg-card rounded-lg p-4 mb-6 border border-border">
               <div className="flex items-center space-x-2 mb-2">
-                <Calendar className="w-4 h-4 text-blue-400" />
-                <span className="font-semibold text-white">Expected Close</span>
+                <Calendar className="w-4 h-4 text-primary" />
+                <span className="font-semibold text-card-foreground">Expected Close</span>
               </div>
-              <div className="text-lg text-white">
+              <div className="text-lg text-card-foreground">
                 {formatDate(selectedDeal.expectedCloseDate)}
               </div>
             </div>
 
             {/* AI Insights */}
             <div className="mb-6">
-              <h4 className="font-semibold text-white mb-4 flex items-center space-x-2">
-                <Brain className="w-5 h-5 text-purple-400" />
+              <h4 className="font-semibold text-sidebar-foreground mb-4 flex items-center space-x-2">
+                <Brain className="w-5 h-5 text-primary" />
                 <span>AI Insights</span>
               </h4>
               <div className="space-y-4">
@@ -386,7 +386,7 @@ const Deals = observer(() => {
             {/* Positive Signals */}
             {selectedDeal.positiveSignals.length > 0 && (
               <div className="mb-6">
-                <h4 className="font-semibold text-white mb-3 flex items-center space-x-2">
+                <h4 className="font-semibold text-sidebar-foreground mb-3 flex items-center space-x-2">
                   <TrendingUp className="w-4 h-4 text-green-400" />
                   <span>Positive Signals</span>
                 </h4>
@@ -394,7 +394,7 @@ const Deals = observer(() => {
                   {selectedDeal.positiveSignals.map((signal, index) => (
                     <div key={index} className="flex items-center space-x-2 text-sm">
                       <div className="w-2 h-2 bg-green-400 rounded-full" />
-                      <span className="text-slate-300">{signal}</span>
+                      <span className="text-card-foreground">{signal}</span>
                     </div>
                   ))}
                 </div>
@@ -404,7 +404,7 @@ const Deals = observer(() => {
             {/* Risk Factors */}
             {selectedDeal.riskFactors.length > 0 && (
               <div className="mb-6">
-                <h4 className="font-semibold text-white mb-3 flex items-center space-x-2">
+                <h4 className="font-semibold text-sidebar-foreground mb-3 flex items-center space-x-2">
                   <AlertTriangle className="w-4 h-4 text-red-400" />
                   <span>Risk Factors</span>
                 </h4>
@@ -412,7 +412,7 @@ const Deals = observer(() => {
                   {selectedDeal.riskFactors.map((risk, index) => (
                     <div key={index} className="flex items-center space-x-2 text-sm">
                       <div className="w-2 h-2 bg-red-400 rounded-full" />
-                      <span className="text-slate-300">{risk}</span>
+                      <span className="text-card-foreground">{risk}</span>
                     </div>
                   ))}
                 </div>
@@ -421,21 +421,21 @@ const Deals = observer(() => {
 
             {/* Recent Activities */}
             <div className="mb-6">
-              <h4 className="font-semibold text-white mb-3">Recent Activities</h4>
+              <h4 className="font-semibold text-sidebar-foreground mb-3">Recent Activities</h4>
               <div className="space-y-3">
                 {selectedDeal.activities.slice(0, 3).map((activity) => (
-                  <div key={activity.id} className="p-3 bg-slate-800 rounded-lg">
+                  <div key={activity.id} className="p-3 bg-card rounded-lg border border-border">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-white capitalize">
+                      <span className="text-sm font-medium text-card-foreground capitalize">
                         {activity.type}
                       </span>
-                      <span className="text-xs text-slate-400">
+                      <span className="text-xs text-muted-foreground">
                         {formatDate(activity.date)}
                       </span>
                     </div>
-                    <p className="text-sm text-slate-400">{activity.description}</p>
+                    <p className="text-sm text-muted-foreground">{activity.description}</p>
                     {activity.outcome && (
-                      <p className="text-xs text-slate-500 mt-1">{activity.outcome}</p>
+                      <p className="text-xs text-muted-foreground/70 mt-1">{activity.outcome}</p>
                     )}
                   </div>
                 ))}

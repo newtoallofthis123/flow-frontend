@@ -46,12 +46,12 @@ const ProbabilityBadge = ({
     <div className={`${getConfidenceColor()} ${getSizeClasses()} rounded-lg border backdrop-blur-sm`}>
       <div className="flex items-center space-x-1">
         {showIcon && (
-          <Brain className={`${size === 'sm' ? 'w-3 h-3' : size === 'lg' ? 'w-5 h-5' : 'w-4 h-4'} text-purple-400`} />
+          <Brain className={`${size === 'sm' ? 'w-3 h-3' : size === 'lg' ? 'w-5 h-5' : 'w-4 h-4'} text-primary`} />
         )}
         <span className={`font-semibold ${getProbabilityColor()}`}>
           {probability}%
         </span>
-        <span className="text-slate-400">AI</span>
+        <span className="text-muted-foreground">AI</span>
       </div>
     </div>
   )

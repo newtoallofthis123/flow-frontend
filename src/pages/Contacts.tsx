@@ -59,12 +59,12 @@ const Contacts = observer(() => {
     <MainLayout>
       <div className="h-full flex">
         {/* Left Panel - Contact List */}
-        <div className="w-96 border-r border-slate-800 bg-slate-900/50 flex flex-col">
+        <div className="w-96 border-r border-border bg-sidebar/50 flex flex-col">
           {/* Header */}
-          <div className="p-6 border-b border-slate-800">
+          <div className="p-6 border-b border-border">
             <div className="flex items-center justify-between mb-4">
-              <h1 className="text-2xl font-bold text-white">Contacts</h1>
-              <div className="flex items-center space-x-2 text-sm text-slate-400">
+              <h1 className="text-2xl font-bold text-foreground">Contacts</h1>
+              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                 <User className="w-4 h-4" />
                 <span>{contactsStore.contactStats.total}</span>
               </div>
@@ -85,14 +85,14 @@ const Contacts = observer(() => {
           </div>
 
           {/* Stats Cards */}
-          <div className="p-4 border-b border-slate-800">
+          <div className="p-4 border-b border-border">
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-slate-800 rounded-lg p-3">
-                <div className="text-xs text-slate-400 mb-1">High Value</div>
+              <div className="bg-card rounded-lg p-3">
+                <div className="text-xs text-muted-foreground mb-1">High Value</div>
                 <div className="text-lg font-bold text-green-400">{contactsStore.contactStats.highValue}</div>
               </div>
-              <div className="bg-slate-800 rounded-lg p-3">
-                <div className="text-xs text-slate-400 mb-1">At Risk</div>
+              <div className="bg-card rounded-lg p-3">
+                <div className="text-xs text-muted-foreground mb-1">At Risk</div>
                 <div className="text-lg font-bold text-red-400">{contactsStore.contactStats.atRisk}</div>
               </div>
             </div>
@@ -107,16 +107,16 @@ const Contacts = observer(() => {
                   onClick={() => setSelectedContactId(contact.id)}
                   className={`p-4 rounded-lg border cursor-pointer transition-all ${
                     selectedContactId === contact.id
-                      ? 'bg-slate-700 border-blue-500'
-                      : 'bg-slate-800 border-slate-700 hover:bg-slate-700/50'
+                      ? 'bg-accent border-primary'
+                      : 'bg-card border-border hover:bg-accent/50'
                   }`}
                 >
                   {/* Contact Header */}
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-semibold text-white truncate">{contact.name}</h3>
-                      <p className="text-xs text-slate-400 truncate">{contact.title}</p>
-                      <p className="text-xs text-slate-500 truncate">{contact.company}</p>
+                      <h3 className="text-sm font-semibold text-card-foreground truncate">{contact.name}</h3>
+                      <p className="text-xs text-muted-foreground truncate">{contact.title}</p>
+                      <p className="text-xs text-muted-foreground/70 truncate">{contact.company}</p>
                     </div>
                     <div className="flex items-center space-x-2 ml-2">
                       <HealthScore score={contact.healthScore} size="sm" />
@@ -127,11 +127,11 @@ const Contacts = observer(() => {
                   {/* Contact Stats */}
                   <div className="flex items-center justify-between text-xs">
                     <div className="flex items-center space-x-3">
-                      <div className="flex items-center space-x-1 text-slate-400">
+                      <div className="flex items-center space-x-1 text-muted-foreground">
                         <DollarSign className="w-3 h-3" />
                         <span>{formatCurrency(contact.totalValue)}</span>
                       </div>
-                      <div className="flex items-center space-x-1 text-slate-400">
+                      <div className="flex items-center space-x-1 text-muted-foreground">
                         <Clock className="w-3 h-3" />
                         <span>{formatDate(contact.lastContact)}</span>
                       </div>
@@ -147,12 +147,12 @@ const Contacts = observer(() => {
                   {contact.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">
                       {contact.tags.slice(0, 2).map((tag) => (
-                        <span key={tag} className="px-2 py-0.5 bg-slate-700 text-slate-300 text-xs rounded">
+                        <span key={tag} className="px-2 py-0.5 bg-secondary text-secondary-foreground text-xs rounded">
                           {tag}
                         </span>
                       ))}
                       {contact.tags.length > 2 && (
-                        <span className="px-2 py-0.5 bg-slate-700 text-slate-400 text-xs rounded">
+                        <span className="px-2 py-0.5 bg-secondary text-muted-foreground text-xs rounded">
                           +{contact.tags.length - 2}
                         </span>
                       )}
@@ -169,18 +169,18 @@ const Contacts = observer(() => {
           {selectedContact ? (
             <>
               {/* Contact Header */}
-              <div className="p-6 border-b border-slate-800 bg-slate-900/30">
+              <div className="p-6 border-b border-border bg-card/30">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-start space-x-4">
                     <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
-                      <span className="text-white font-bold text-lg">
+                      <span className="text-primary-foreground font-bold text-lg">
                         {selectedContact.name.charAt(0)}
                       </span>
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold text-white mb-1">{selectedContact.name}</h2>
-                      <p className="text-slate-400 mb-1">{selectedContact.title}</p>
-                      <p className="text-slate-500 flex items-center space-x-1">
+                      <h2 className="text-2xl font-bold text-foreground mb-1">{selectedContact.name}</h2>
+                      <p className="text-muted-foreground mb-1">{selectedContact.title}</p>
+                      <p className="text-muted-foreground/70 flex items-center space-x-1">
                         <Building className="w-4 h-4" />
                         <span>{selectedContact.company}</span>
                       </p>
@@ -197,26 +197,26 @@ const Contacts = observer(() => {
                     />
                     <div className="text-right">
                       <div className="text-2xl font-bold text-green-400">{formatCurrency(selectedContact.totalValue)}</div>
-                      <div className="text-sm text-slate-400">{selectedContact.totalDeals} deals</div>
+                      <div className="text-sm text-muted-foreground">{selectedContact.totalDeals} deals</div>
                     </div>
                   </div>
                 </div>
 
                 {/* Quick Actions */}
                 <div className="flex items-center space-x-3">
-                  <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white transition-colors">
+                  <button className="flex items-center space-x-2 px-4 py-2 bg-primary hover:bg-primary/90 rounded-lg text-primary-foreground transition-colors">
                     <Phone className="w-4 h-4" />
                     <span>Call</span>
                   </button>
-                  <button className="flex items-center space-x-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white transition-colors">
+                  <button className="flex items-center space-x-2 px-4 py-2 bg-secondary hover:bg-secondary/80 rounded-lg text-secondary-foreground transition-colors">
                     <Mail className="w-4 h-4" />
                     <span>Email</span>
                   </button>
-                  <button className="flex items-center space-x-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white transition-colors">
+                  <button className="flex items-center space-x-2 px-4 py-2 bg-secondary hover:bg-secondary/80 rounded-lg text-secondary-foreground transition-colors">
                     <Calendar className="w-4 h-4" />
                     <span>Schedule</span>
                   </button>
-                  <button className="flex items-center space-x-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white transition-colors">
+                  <button className="flex items-center space-x-2 px-4 py-2 bg-secondary hover:bg-secondary/80 rounded-lg text-secondary-foreground transition-colors">
                     <MessageSquare className="w-4 h-4" />
                     <span>Message</span>
                   </button>
@@ -229,8 +229,8 @@ const Contacts = observer(() => {
                   {/* Main Content */}
                   <div className="col-span-2 space-y-6">
                     {/* Communication Timeline */}
-                    <div className="bg-slate-800 rounded-lg p-6">
-                      <h3 className="text-lg font-semibold text-white mb-4 flex items-center space-x-2">
+                    <div className="bg-card rounded-lg p-6 border border-border">
+                      <h3 className="text-lg font-semibold text-card-foreground mb-4 flex items-center space-x-2">
                         <MessageSquare className="w-5 h-5" />
                         <span>Communication Timeline</span>
                       </h3>
@@ -238,7 +238,7 @@ const Contacts = observer(() => {
                       <div className="space-y-4">
                         {selectedContact.communicationHistory.map((event) => (
                           <div key={event.id} className="flex space-x-4">
-                            <div className="w-10 h-10 bg-slate-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center flex-shrink-0">
                               {event.type === 'email' && <Mail className="w-5 h-5 text-blue-400" />}
                               {event.type === 'call' && <Phone className="w-5 h-5 text-green-400" />}
                               {event.type === 'meeting' && <Calendar className="w-5 h-5 text-purple-400" />}
@@ -248,7 +248,7 @@ const Contacts = observer(() => {
                               <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center space-x-2">
                                   {event.subject && (
-                                    <h4 className="font-semibold text-white text-sm">{event.subject}</h4>
+                                    <h4 className="font-semibold text-card-foreground text-sm">{event.subject}</h4>
                                   )}
                                   <SentimentIndicator
                                     sentiment={event.sentiment}
@@ -256,16 +256,16 @@ const Contacts = observer(() => {
                                     variant="minimal"
                                   />
                                 </div>
-                                <div className="text-xs text-slate-400">
+                                <div className="text-xs text-muted-foreground">
                                   {formatDate(event.date)} • {formatTime(event.date)}
                                 </div>
                               </div>
-                              <p className="text-sm text-slate-400 mb-2">{event.summary}</p>
+                              <p className="text-sm text-muted-foreground mb-2">{event.summary}</p>
                               {event.aiAnalysis && (
-                                <div className="p-3 bg-slate-700/50 rounded-lg">
+                                <div className="p-3 bg-accent/50 rounded-lg border border-border">
                                   <div className="flex items-start space-x-2">
-                                    <TrendingUp className="w-4 h-4 text-purple-400 mt-0.5" />
-                                    <p className="text-sm text-slate-300">{event.aiAnalysis}</p>
+                                    <TrendingUp className="w-4 h-4 text-primary mt-0.5" />
+                                    <p className="text-sm text-card-foreground">{event.aiAnalysis}</p>
                                   </div>
                                 </div>
                               )}
@@ -280,7 +280,7 @@ const Contacts = observer(() => {
                   <div className="space-y-6">
                     {/* AI Insights */}
                     <div>
-                      <h3 className="text-lg font-semibold text-white mb-4">AI Insights</h3>
+                      <h3 className="text-lg font-semibold text-foreground mb-4">AI Insights</h3>
                       <div className="space-y-4">
                         {selectedContact.aiInsights.map((insight) => (
                           <AIInsight
@@ -299,18 +299,18 @@ const Contacts = observer(() => {
                     </div>
 
                     {/* Contact Details */}
-                    <div className="bg-slate-800 rounded-lg p-4">
-                      <h4 className="font-semibold text-white mb-3">Contact Details</h4>
+                    <div className="bg-card rounded-lg p-4 border border-border">
+                      <h4 className="font-semibold text-card-foreground mb-3">Contact Details</h4>
                       <div className="space-y-3 text-sm">
-                        <div className="flex items-center space-x-2 text-slate-400">
+                        <div className="flex items-center space-x-2 text-muted-foreground">
                           <Mail className="w-4 h-4" />
                           <span>{selectedContact.email}</span>
                         </div>
-                        <div className="flex items-center space-x-2 text-slate-400">
+                        <div className="flex items-center space-x-2 text-muted-foreground">
                           <Phone className="w-4 h-4" />
                           <span>{selectedContact.phone}</span>
                         </div>
-                        <div className="flex items-center space-x-2 text-slate-400">
+                        <div className="flex items-center space-x-2 text-muted-foreground">
                           <Building className="w-4 h-4" />
                           <span>{selectedContact.company}</span>
                         </div>
@@ -318,11 +318,11 @@ const Contacts = observer(() => {
                     </div>
 
                     {/* Tags */}
-                    <div className="bg-slate-800 rounded-lg p-4">
-                      <h4 className="font-semibold text-white mb-3">Tags</h4>
+                    <div className="bg-card rounded-lg p-4 border border-border">
+                      <h4 className="font-semibold text-card-foreground mb-3">Tags</h4>
                       <div className="flex flex-wrap gap-2">
                         {selectedContact.tags.map((tag) => (
-                          <span key={tag} className="flex items-center space-x-1 px-2 py-1 bg-slate-700 text-slate-300 text-sm rounded">
+                          <span key={tag} className="flex items-center space-x-1 px-2 py-1 bg-secondary text-secondary-foreground text-sm rounded">
                             <Tag className="w-3 h-3" />
                             <span>{tag}</span>
                           </span>
@@ -332,11 +332,11 @@ const Contacts = observer(() => {
 
                     {/* Notes */}
                     {selectedContact.notes.length > 0 && (
-                      <div className="bg-slate-800 rounded-lg p-4">
-                        <h4 className="font-semibold text-white mb-3">Notes</h4>
+                      <div className="bg-card rounded-lg p-4 border border-border">
+                        <h4 className="font-semibold text-card-foreground mb-3">Notes</h4>
                         <div className="space-y-2">
                           {selectedContact.notes.map((note, index) => (
-                            <p key={index} className="text-sm text-slate-400">• {note}</p>
+                            <p key={index} className="text-sm text-muted-foreground">• {note}</p>
                           ))}
                         </div>
                       </div>
@@ -348,9 +348,9 @@ const Contacts = observer(() => {
           ) : (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
-                <User className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-white mb-2">Select a Contact</h3>
-                <p className="text-slate-400">Choose a contact from the list to view their details and AI insights.</p>
+                <User className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-foreground mb-2">Select a Contact</h3>
+                <p className="text-muted-foreground">Choose a contact from the list to view their details and AI insights.</p>
               </div>
             </div>
           )}

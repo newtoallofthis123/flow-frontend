@@ -100,8 +100,8 @@ const SentimentIndicator = ({
             </span>
             {showConfidence && confidence > 0 && (
               <div className="flex items-center space-x-1">
-                <Brain className="w-3 h-3 text-purple-400" />
-                <span className="text-xs text-slate-400">{confidence}%</span>
+                <Brain className="w-3 h-3 text-primary" />
+                <span className="text-xs text-muted-foreground">{confidence}%</span>
               </div>
             )}
           </div>
@@ -121,8 +121,8 @@ const SentimentIndicator = ({
       )}
       {showConfidence && confidence > 0 && (
         <div className="ml-1 flex items-center">
-          <Brain className="w-3 h-3 text-purple-400" />
-          <span className="text-xs text-slate-400 ml-1">{confidence}%</span>
+          <Brain className="w-3 h-3 text-primary" />
+          <span className="text-xs text-muted-foreground ml-1">{confidence}%</span>
         </div>
       )}
     </div>

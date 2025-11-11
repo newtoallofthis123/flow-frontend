@@ -42,10 +42,10 @@ const AIForecastCard = observer(() => {
   }
 
   return (
-    <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
+    <div className="bg-card rounded-lg p-6 border border-border">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold text-white flex items-center space-x-2">
-          <TrendingUp className="w-5 h-5 text-blue-400" />
+        <h2 className="text-xl font-semibold text-card-foreground flex items-center space-x-2">
+          <TrendingUp className="w-5 h-5 text-primary" />
           <span>AI Forecast</span>
         </h2>
         <div className="flex space-x-1">
@@ -55,10 +55,10 @@ const AIForecastCard = observer(() => {
       </div>
 
       <div className="mb-4">
-        <div className="text-4xl font-bold text-white mb-2">
+        <div className="text-4xl font-bold text-card-foreground mb-2">
           {formatCurrency(forecastData.revenue)}
         </div>
-        <div className="text-slate-400 text-sm">{forecastData.period}</div>
+        <div className="text-muted-foreground text-sm">{forecastData.period}</div>
       </div>
 
       <div className="flex items-center justify-between">
@@ -68,7 +68,7 @@ const AIForecastCard = observer(() => {
             {forecastData.confidence} confidence
           </span>
         </div>
-        <button className="text-blue-400 hover:text-blue-300 text-sm flex items-center space-x-1 transition-colors">
+        <button className="text-primary hover:text-primary/80 text-sm flex items-center space-x-1 transition-colors">
           <span>Details</span>
           <ExternalLink className="w-3 h-3" />
         </button>

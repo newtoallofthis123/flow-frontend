@@ -127,17 +127,17 @@ const AIInsight = ({
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center space-x-2 mb-1">
-            <h4 className={`${sizeClasses.title} font-semibold text-white truncate`}>
+            <h4 className={`${sizeClasses.title} font-semibold text-card-foreground truncate`}>
               {title}
             </h4>
             {confidence > 0 && (
               <div className="flex items-center space-x-1">
-                <Brain className="w-3 h-3 text-purple-400" />
-                <span className="text-xs text-slate-400">{confidence}%</span>
+                <Brain className="w-3 h-3 text-primary" />
+                <span className="text-xs text-muted-foreground">{confidence}%</span>
               </div>
             )}
           </div>
-          <p className={`${sizeClasses.description} text-slate-400 leading-relaxed`}>
+          <p className={`${sizeClasses.description} text-muted-foreground leading-relaxed`}>
             {description}
           </p>
           {actionable && suggestedAction && (
@@ -161,7 +161,7 @@ const AIInsight = ({
         {onDismiss && (
           <button
             onClick={onDismiss}
-            className="absolute top-2 right-2 text-slate-400 hover:text-white transition-colors"
+            className="absolute top-2 right-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -170,10 +170,10 @@ const AIInsight = ({
         <div className="flex items-start space-x-3 pr-6">
           <Icon className={`${sizeClasses.icon} ${config.color} flex-shrink-0 mt-0.5`} />
           <div className="flex-1 min-w-0">
-            <h4 className={`${sizeClasses.title} font-semibold text-white mb-1`}>
+            <h4 className={`${sizeClasses.title} font-semibold text-card-foreground mb-1`}>
               {title}
             </h4>
-            <p className={`${sizeClasses.description} text-slate-400 leading-relaxed`}>
+            <p className={`${sizeClasses.description} text-muted-foreground leading-relaxed`}>
               {description}
             </p>
             {actionable && suggestedAction && onAction && (
@@ -200,7 +200,7 @@ const AIInsight = ({
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center space-x-3">
           <Icon className={`${sizeClasses.icon} ${config.color}`} />
-          <h4 className={`${sizeClasses.title} font-semibold text-white`}>
+          <h4 className={`${sizeClasses.title} font-semibold text-card-foreground`}>
             {title}
           </h4>
         </div>
@@ -213,14 +213,14 @@ const AIInsight = ({
           )}
           {confidence > 0 && (
             <div className="flex items-center space-x-1">
-              <Brain className="w-3 h-3 text-purple-400" />
-              <span className="text-xs text-slate-400 font-medium">{confidence}%</span>
+              <Brain className="w-3 h-3 text-primary" />
+              <span className="text-xs text-muted-foreground font-medium">{confidence}%</span>
             </div>
           )}
           {onDismiss && (
             <button
               onClick={onDismiss}
-              className="text-slate-400 hover:text-white transition-colors"
+              className="text-muted-foreground hover:text-foreground transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -228,13 +228,13 @@ const AIInsight = ({
         </div>
       </div>
 
-      <p className={`${sizeClasses.description} text-slate-400 leading-relaxed mb-4`}>
+      <p className={`${sizeClasses.description} text-muted-foreground leading-relaxed mb-4`}>
         {description}
       </p>
 
       {actionable && suggestedAction && onAction && (
-        <div className="flex items-center justify-between pt-3 border-t border-slate-700/50">
-          <span className="text-xs text-slate-500 uppercase tracking-wide font-medium">
+        <div className="flex items-center justify-between pt-3 border-t border-border/50">
+          <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
             Suggested Action
           </span>
           <button
