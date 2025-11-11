@@ -145,7 +145,7 @@ const Contacts = observer(() => {
                   </div>
 
                   {/* Tags */}
-                  {contact.tags.length > 0 && (
+                  {contact.tags && contact.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">
                       {contact.tags.slice(0, 2).map((tag) => (
                         <span key={tag} className="px-2 py-0.5 bg-secondary text-secondary-foreground text-xs rounded">
@@ -237,7 +237,7 @@ const Contacts = observer(() => {
                       </h3>
 
                       <div className="space-y-4">
-                        {selectedContact.communicationHistory.map((event) => (
+                        {(selectedContact.communicationHistory || []).map((event) => (
                           <div key={event.id} className="flex space-x-4">
                             <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center flex-shrink-0">
                               {event.type === 'email' && <Mail className="w-5 h-5 text-blue-400" />}
@@ -283,7 +283,7 @@ const Contacts = observer(() => {
                     <div>
                       <h3 className="text-lg font-semibold text-foreground mb-4">AI Insights</h3>
                       <div className="space-y-4">
-                        {selectedContact.aiInsights.map((insight) => (
+                        {(selectedContact.aiInsights || []).map((insight) => (
                           <AIInsight
                             key={insight.id}
                             type={insight.type}
@@ -322,7 +322,7 @@ const Contacts = observer(() => {
                     <div className="bg-card rounded-lg p-4 border border-border">
                       <h4 className="font-semibold text-card-foreground mb-3">Tags</h4>
                       <div className="flex flex-wrap gap-2">
-                        {selectedContact.tags.map((tag) => (
+                        {(selectedContact.tags || []).map((tag) => (
                           <span key={tag} className="flex items-center space-x-1 px-2 py-1 bg-secondary text-secondary-foreground text-sm rounded">
                             <Tag className="w-3 h-3" />
                             <span>{tag}</span>
@@ -332,7 +332,7 @@ const Contacts = observer(() => {
                     </div>
 
                     {/* Notes */}
-                    {selectedContact.notes.length > 0 && (
+                    {selectedContact.notes && selectedContact.notes.length > 0 && (
                       <div className="bg-card rounded-lg p-4 border border-border">
                         <h4 className="font-semibold text-card-foreground mb-3">Notes</h4>
                         <div className="space-y-2">

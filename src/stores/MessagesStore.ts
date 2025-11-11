@@ -1,4 +1,7 @@
-import { makeAutoObservable } from 'mobx'
+import { makeObservable, observable, computed, action, runInAction, reaction } from 'mobx'
+import { messagesApi } from '../api/messages.api'
+import { BaseStore } from './BaseStore'
+import { wsClient } from '../api/websocket'
 
 export interface Message {
   id: string
@@ -71,18 +74,128 @@ export interface MessageTemplate {
   variables: string[]
 }
 
-export class MessagesStore {
+export class MessagesStore extends BaseStore {
   conversations: Conversation[] = []
   selectedConversation: Conversation | null = null
   searchQuery = ''
   filterBy: 'all' | 'unread' | 'high-priority' | 'follow-up' = 'all'
-  isLoading = false
   composingMessage = ''
   smartCompose: SmartCompose | null = null
+  messageStats: {
+    total: number
+    unread: number
+    highPriority: number
+    needsFollowUp: number
+    averageResponseTime: string
+  } = {
+    total: 0,
+    unread: 0,
+    highPriority: 0,
+    needsFollowUp: 0,
+    averageResponseTime: '0 hours',
+  }
+  sentimentOverview: {
+    positive: number
+    neutral: number
+    negative: number
+  } = {
+    positive: 0,
+    neutral: 0,
+    negative: 0,
+  }
+
+  private _initialized = false
 
   constructor() {
-    makeAutoObservable(this)
-    this.loadMockData()
+    super()
+    makeObservable(this, {
+      conversations: observable,
+      selectedConversation: observable,
+      searchQuery: observable,
+      filterBy: observable,
+      composingMessage: observable,
+      smartCompose: observable,
+      messageStats: observable,
+      sentimentOverview: observable,
+      filteredConversations: computed,
+      setSearchQuery: action,
+      setFilter: action,
+      selectConversation: action,
+      setComposingMessage: action,
+    })
+    this.setupReactions()
+    this.setupWebSocket()
+  }
+
+  private setupReactions() {
+    // Auto-fetch when filter changes
+    reaction(
+      () => this.filterBy,
+      () => {
+        if (this._initialized) {
+          this.fetchConversations()
+        }
+      }
+    )
+
+    // Debounced search
+    let searchTimeout: ReturnType<typeof setTimeout>
+    reaction(
+      () => this.searchQuery,
+      () => {
+        clearTimeout(searchTimeout)
+        searchTimeout = setTimeout(() => {
+          if (this._initialized) {
+            this.fetchConversations()
+          }
+        }, 300)
+      }
+    )
+  }
+
+  async initialize() {
+    if (this._initialized) return
+    this._initialized = true
+    
+    await Promise.all([
+      this.fetchConversations(),
+      this.fetchStats(),
+      this.fetchSentimentOverview(),
+    ])
+  }
+
+  private setupWebSocket() {
+    wsClient.on('conversation:created', (conversation: Conversation) => {
+      runInAction(() => {
+        this.conversations.unshift(conversation)
+      })
+    })
+
+    wsClient.on('conversation:updated', (data: { id: string; changes: Partial<Conversation> }) => {
+      runInAction(() => {
+        const conversation = this.conversations.find(c => c.id === data.id)
+        if (conversation) {
+          Object.assign(conversation, data.changes)
+        }
+        if (this.selectedConversation?.id === data.id) {
+          Object.assign(this.selectedConversation, data.changes)
+        }
+      })
+    })
+
+    wsClient.on('message:sent', (data: { conversationId: string; message: Message }) => {
+      runInAction(() => {
+        const conversation = this.conversations.find(c => c.id === data.conversationId)
+        if (conversation) {
+          conversation.messages.push(data.message)
+          conversation.lastMessage = new Date(data.message.timestamp)
+        }
+        if (this.selectedConversation?.id === data.conversationId) {
+          this.selectedConversation.messages.push(data.message)
+          this.selectedConversation.lastMessage = new Date(data.message.timestamp)
+        }
+      })
+    })
   }
 
   get filteredConversations() {
@@ -116,33 +229,6 @@ export class MessagesStore {
       .sort((a, b) => b.lastMessage.getTime() - a.lastMessage.getTime())
   }
 
-  get messageStats() {
-    const total = this.conversations.length
-    const unread = this.conversations.filter(c => c.unreadCount > 0).length
-    const highPriority = this.conversations.filter(c => c.priority === 'high').length
-    const needsFollowUp = this.conversations.filter(c => c.tags.includes('follow-up')).length
-
-    return {
-      total,
-      unread,
-      highPriority,
-      needsFollowUp,
-      averageResponseTime: this.calculateAverageResponseTime()
-    }
-  }
-
-  get sentimentOverview() {
-    const sentiments = this.conversations.map(c => c.overallSentiment)
-    const positive = sentiments.filter(s => s === 'positive').length
-    const neutral = sentiments.filter(s => s === 'neutral').length
-    const negative = sentiments.filter(s => s === 'negative').length
-
-    return {
-      positive: (positive / sentiments.length) * 100,
-      neutral: (neutral / sentiments.length) * 100,
-      negative: (negative / sentiments.length) * 100
-    }
-  }
 
   setSearchQuery = (query: string) => {
     this.searchQuery = query
@@ -160,342 +246,252 @@ export class MessagesStore {
 
   setComposingMessage = (content: string) => {
     this.composingMessage = content
-    this.generateSmartCompose(content)
-  }
-
-  sendMessage = (conversationId: string, content: string, type: Message['type'] = 'email') => {
-    const conversation = this.conversations.find(c => c.id === conversationId)
-    if (!conversation) return
-
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      conversationId,
-      senderId: 'current-user',
-      senderName: 'You',
-      senderType: 'user',
-      content,
-      timestamp: new Date(),
-      type,
-      sentiment: this.analyzeSentiment(content),
-      confidence: 85,
-      status: 'sent'
-    }
-
-    conversation.messages.push(newMessage)
-    conversation.lastMessage = new Date()
-    conversation.tags = conversation.tags.filter(tag => tag !== 'follow-up')
-
-    this.composingMessage = ''
-    this.smartCompose = null
-  }
-
-  markConversationPriority = (conversationId: string, priority: Conversation['priority']) => {
-    const conversation = this.conversations.find(c => c.id === conversationId)
-    if (conversation) {
-      conversation.priority = priority
+    if (content.trim()) {
+      this.generateSmartCompose(content)
+    } else {
+      this.smartCompose = null
     }
   }
 
-  archiveConversation = (conversationId: string) => {
-    const conversation = this.conversations.find(c => c.id === conversationId)
-    if (conversation) {
-      conversation.archived = true
-    }
-  }
-
-  addTag = (conversationId: string, tag: string) => {
-    const conversation = this.conversations.find(c => c.id === conversationId)
-    if (conversation && !conversation.tags.includes(tag)) {
-      conversation.tags.push(tag)
-    }
-  }
-
-  private analyzeSentiment = (content: string): 'positive' | 'neutral' | 'negative' => {
-    // Simple sentiment analysis (in production, would use AI service)
-    const positiveWords = ['great', 'excellent', 'perfect', 'love', 'amazing', 'thank you', 'thanks', 'awesome', 'fantastic']
-    const negativeWords = ['terrible', 'awful', 'hate', 'problem', 'issue', 'frustrated', 'annoying', 'disappointed', 'worst']
-
-    const lowerContent = content.toLowerCase()
-    const positiveCount = positiveWords.filter(word => lowerContent.includes(word)).length
-    const negativeCount = negativeWords.filter(word => lowerContent.includes(word)).length
-
-    if (positiveCount > negativeCount) return 'positive'
-    if (negativeCount > positiveCount) return 'negative'
-    return 'neutral'
-  }
-
-  private generateSmartCompose = (content: string) => {
-    // Mock AI-powered smart compose suggestions
-    const suggestions = []
-    const templates = this.getMessageTemplates()
-
-    if (content.toLowerCase().includes('meeting')) {
-      suggestions.push('Schedule a call', 'Send calendar invite', 'Confirm availability')
-    }
-    if (content.toLowerCase().includes('follow up') || content.toLowerCase().includes('followup')) {
-      suggestions.push('Schedule follow-up reminder', 'Add to task list', 'Set follow-up date')
-    }
-
-    this.smartCompose = {
-      suggestions,
-      toneAdjustments: {
-        current: 'friendly',
-        alternatives: [
-          {
-            tone: 'formal',
-            preview: 'I hope this message finds you well. I wanted to follow up on our previous discussion...'
-          },
-          {
-            tone: 'casual',
-            preview: 'Hey! Just wanted to check in about what we discussed...'
-          }
-        ]
-      },
-      templateSuggestions: templates.slice(0, 3)
-    }
-  }
-
-  private getMessageTemplates = (): MessageTemplate[] => {
-    return [
-      {
-        id: '1',
-        name: 'Follow-up Meeting',
-        category: 'follow-up',
-        content: 'Hi {contactName}, I wanted to follow up on our conversation about {topic}. Would you be available for a quick call this week to discuss next steps?',
-        variables: ['contactName', 'topic']
+  async fetchConversations() {
+    return this.executeAsync(
+      async () => {
+        const conversations = await messagesApi.getConversations({
+          filter: this.filterBy,
+          search: this.searchQuery || undefined,
+        })
+        // Convert date strings to Date objects
+        return conversations.map(conv => ({
+          ...conv,
+          lastMessage: new Date(conv.lastMessage),
+          messages: conv.messages.map(msg => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp),
+          })),
+        }))
       },
       {
-        id: '2',
-        name: 'Proposal Follow-up',
-        category: 'proposal',
-        content: 'Hi {contactName}, I hope you had a chance to review the proposal I sent. I\'d be happy to schedule a call to discuss any questions you might have.',
-        variables: ['contactName']
-      },
-      {
-        id: '3',
-        name: 'Demo Invitation',
-        category: 'meeting',
-        content: 'Hi {contactName}, Based on our conversation, I think you\'d benefit from seeing our platform in action. Would you be interested in a personalized demo this week?',
-        variables: ['contactName']
+        onSuccess: (conversations) => {
+          this.conversations = conversations
+        },
       }
-    ]
+    )
   }
 
-  private calculateAverageResponseTime = (): string => {
-    // Mock calculation - would analyze actual response times
-    return '2.3 hours'
-  }
-
-  private loadMockData = () => {
-    this.conversations = [
-      {
-        id: '1',
-        contactId: '1',
-        contactName: 'Sarah Williams',
-        contactCompany: 'TechCorp Solutions',
-        lastMessage: new Date('2024-01-16T10:30:00'),
-        unreadCount: 2,
-        overallSentiment: 'positive',
-        sentimentTrend: 'improving',
-        aiSummary: 'Positive conversation about Q1 budget planning. Sarah is engaged and ready to move forward with enterprise package.',
-        tags: ['enterprise', 'budget-discussion'],
-        priority: 'high',
-        archived: false,
-        messages: [
-          {
-            id: '1',
-            conversationId: '1',
-            senderId: '1',
-            senderName: 'Sarah Williams',
-            senderType: 'contact',
-            content: 'Hi! I wanted to follow up on our Q1 budget discussion. We\'ve got approval for the enterprise package and are excited to move forward. Could we schedule a call this week to finalize the details?',
-            timestamp: new Date('2024-01-16T10:30:00'),
-            type: 'email',
-            subject: 'Q1 Budget Approval - Ready to Proceed',
-            sentiment: 'positive',
-            confidence: 92,
-            aiAnalysis: {
-              keyTopics: ['Budget approval', 'Enterprise package', 'Timeline'],
-              emotionalTone: 'Enthusiastic and professional',
-              urgencyLevel: 'medium',
-              businessIntent: 'purchase',
-              suggestedResponse: 'Express enthusiasm and propose specific meeting times',
-              responseTime: 'Within 2 hours for high-priority deal',
-              actionItems: ['Schedule follow-up call', 'Prepare enterprise package details', 'Send calendar invite']
-            },
-            status: 'delivered'
-          },
-          {
-            id: '2',
-            conversationId: '1',
-            senderId: 'current-user',
-            senderName: 'You',
-            senderType: 'user',
-            content: 'That\'s fantastic news, Sarah! I\'m thrilled to hear about the budget approval. I\'d love to schedule a call to walk through the enterprise package details and timeline. Are you available Thursday or Friday afternoon?',
-            timestamp: new Date('2024-01-16T08:15:00'),
-            type: 'email',
-            sentiment: 'positive',
-            confidence: 88,
-            status: 'sent'
-          },
-          {
-            id: '3',
-            conversationId: '1',
-            senderId: '1',
-            senderName: 'Sarah Williams',
-            senderType: 'contact',
-            content: 'Perfect! Friday at 2 PM works great for me. Looking forward to it!',
-            timestamp: new Date('2024-01-16T08:45:00'),
-            type: 'email',
-            sentiment: 'positive',
-            confidence: 95,
-            status: 'delivered'
-          }
-        ]
+  async fetchConversation(id: string) {
+    return this.executeAsync(
+      async () => {
+        const conversation = await messagesApi.getConversation(id)
+        // Convert date strings to Date objects
+        return {
+          ...conversation,
+          lastMessage: new Date(conversation.lastMessage),
+          messages: conversation.messages.map(msg => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp),
+          })),
+        }
       },
       {
-        id: '2',
-        contactId: '2',
-        contactName: 'Mike Chen',
-        contactCompany: 'Startup.io',
-        lastMessage: new Date('2024-01-15T16:20:00'),
-        unreadCount: 0,
-        overallSentiment: 'neutral',
-        sentimentTrend: 'stable',
-        aiSummary: 'Price-sensitive prospect asking about scaling options. Needs ROI demonstration and flexible pricing.',
-        tags: ['pricing', 'follow-up', 'roi-needed'],
-        priority: 'medium',
-        archived: false,
-        messages: [
-          {
-            id: '4',
-            conversationId: '2',
-            senderId: '2',
-            senderName: 'Mike Chen',
-            senderType: 'contact',
-            content: 'I\'ve been reviewing your platform and it looks like a good fit for our team. However, I\'m concerned about the pricing as we scale. Do you have any options for startups or volume discounts?',
-            timestamp: new Date('2024-01-15T14:30:00'),
-            type: 'email',
-            subject: 'Pricing Questions for Growing Team',
-            sentiment: 'neutral',
-            confidence: 75,
-            aiAnalysis: {
-              keyTopics: ['Pricing concerns', 'Scaling', 'Startup discounts'],
-              emotionalTone: 'Professional but cautious',
-              urgencyLevel: 'medium',
-              businessIntent: 'inquiry',
-              suggestedResponse: 'Address pricing concerns with ROI focus and startup-friendly options',
-              responseTime: 'Within 4 hours - price-sensitive lead',
-              actionItems: ['Prepare ROI analysis', 'Create startup pricing proposal', 'Schedule discovery call']
-            },
-            status: 'read'
-          },
-          {
-            id: '5',
-            conversationId: '2',
-            senderId: 'current-user',
-            senderName: 'You',
-            senderType: 'user',
-            content: 'Thanks for your interest, Mike! I completely understand the scaling concerns for startups. We actually have several options that could work well for you, including our startup-friendly pricing tier. I\'d love to schedule a 15-minute call to understand your specific needs and show you how our customers typically see ROI within the first 3 months. Would tomorrow afternoon work?',
-            timestamp: new Date('2024-01-15T16:20:00'),
-            type: 'email',
-            sentiment: 'positive',
-            confidence: 85,
-            status: 'sent'
+        onSuccess: (conversation) => {
+          this.selectedConversation = conversation
+          const index = this.conversations.findIndex(c => c.id === id)
+          if (index !== -1) {
+            this.conversations[index] = conversation
           }
-        ]
-      },
-      {
-        id: '3',
-        contactId: '3',
-        contactName: 'Emma Rodriguez',
-        contactCompany: 'GlobalCorp',
-        lastMessage: new Date('2024-01-10T11:15:00'),
-        unreadCount: 1,
-        overallSentiment: 'negative',
-        sentimentTrend: 'declining',
-        aiSummary: 'Frustrated customer with service issues. Relationship at risk, needs immediate executive attention.',
-        tags: ['at-risk', 'service-issues', 'executive-escalation'],
-        priority: 'high',
-        archived: false,
-        messages: [
-          {
-            id: '6',
-            conversationId: '3',
-            senderId: '3',
-            senderName: 'Emma Rodriguez',
-            senderType: 'contact',
-            content: 'I\'m really disappointed with the recent service issues we\'ve been experiencing. Our team has lost confidence in the platform, and I\'m under pressure to evaluate alternatives. We need a senior leader to address these concerns immediately, or we\'ll have to consider other options.',
-            timestamp: new Date('2024-01-10T11:15:00'),
-            type: 'email',
-            subject: 'Urgent: Service Issues and Relationship Concerns',
-            sentiment: 'negative',
-            confidence: 94,
-            aiAnalysis: {
-              keyTopics: ['Service issues', 'Lost confidence', 'Competitor evaluation', 'Executive escalation needed'],
-              emotionalTone: 'Frustrated and disappointed',
-              urgencyLevel: 'high',
-              businessIntent: 'complaint',
-              suggestedResponse: 'Immediate executive escalation, acknowledge concerns, provide specific action plan',
-              responseTime: 'Immediate response required - relationship at risk',
-              actionItems: ['Executive escalation', 'Service review meeting', 'Recovery plan', 'Competitor analysis']
-            },
-            status: 'delivered'
-          }
-        ]
-      },
-      {
-        id: '4',
-        contactId: '4',
-        contactName: 'David Park',
-        contactCompany: 'InnovateTech',
-        lastMessage: new Date('2024-01-14T15:45:00'),
-        unreadCount: 0,
-        overallSentiment: 'positive',
-        sentimentTrend: 'improving',
-        aiSummary: 'Very satisfied existing customer ready for expansion. Strong champion with proven ROI.',
-        tags: ['expansion', 'champion', 'existing-customer'],
-        priority: 'high',
-        archived: false,
-        messages: [
-          {
-            id: '7',
-            conversationId: '4',
-            senderId: '4',
-            senderName: 'David Park',
-            senderType: 'contact',
-            content: 'Our Q4 results with your platform exceeded all expectations! The team is thrilled with the productivity gains. We\'re ready to expand to our other 3 product teams. Can we discuss pricing for the additional users?',
-            timestamp: new Date('2024-01-14T15:45:00'),
-            type: 'email',
-            subject: 'Expansion Opportunity - Additional Teams',
-            sentiment: 'positive',
-            confidence: 98,
-            aiAnalysis: {
-              keyTopics: ['Exceeded expectations', 'Productivity gains', 'Team expansion', 'Pricing discussion'],
-              emotionalTone: 'Enthusiastic and satisfied',
-              urgencyLevel: 'medium',
-              businessIntent: 'purchase',
-              suggestedResponse: 'Express excitement, propose expansion meeting with volume pricing',
-              responseTime: 'Within 2 hours - hot expansion opportunity',
-              actionItems: ['Prepare expansion proposal', 'Calculate volume discounts', 'Schedule expansion meeting']
-            },
-            status: 'read'
-          },
-          {
-            id: '8',
-            conversationId: '4',
-            senderId: 'current-user',
-            senderName: 'You',
-            senderType: 'user',
-            content: 'David, that\'s incredible news! I\'m so excited to hear about the amazing results. I\'d love to put together an expansion proposal with volume pricing for the additional teams. Could we schedule a call this week to discuss the specifics and timeline?',
-            timestamp: new Date('2024-01-14T16:20:00'),
-            type: 'email',
-            sentiment: 'positive',
-            confidence: 92,
-            status: 'sent'
-          }
-        ]
+        },
       }
-    ]
+    )
   }
+
+  async fetchStats() {
+    return this.executeAsync(
+      async () => {
+        const stats = await messagesApi.getStats()
+        return stats
+      },
+      {
+        onSuccess: (stats) => {
+          this.messageStats = stats
+        },
+        showLoading: false,
+      }
+    )
+  }
+
+  async fetchSentimentOverview() {
+    return this.executeAsync(
+      async () => {
+        const overview = await messagesApi.getSentimentOverview()
+        return overview
+      },
+      {
+        onSuccess: (overview) => {
+          this.sentimentOverview = overview
+        },
+        showLoading: false,
+      }
+    )
+  }
+
+  async sendMessage(conversationId: string, content: string, type: Message['type'] = 'email', subject?: string) {
+    return this.executeAsync(
+      async () => {
+        const message = await messagesApi.sendMessage(conversationId, {
+          content,
+          type,
+          subject,
+        })
+        // Convert date strings to Date objects
+        return {
+          ...message,
+          timestamp: new Date(message.timestamp),
+        }
+      },
+      {
+        onSuccess: (message) => {
+          const conversation = this.conversations.find(c => c.id === conversationId)
+          if (conversation) {
+            conversation.messages.push(message)
+            conversation.lastMessage = message.timestamp
+            conversation.tags = conversation.tags.filter(tag => tag !== 'follow-up')
+          }
+          if (this.selectedConversation?.id === conversationId) {
+            this.selectedConversation.messages.push(message)
+            this.selectedConversation.lastMessage = message.timestamp
+            this.selectedConversation.tags = this.selectedConversation.tags.filter(tag => tag !== 'follow-up')
+          }
+          this.composingMessage = ''
+          this.smartCompose = null
+        },
+      }
+    )
+  }
+
+  async markConversationPriority(conversationId: string, priority: Conversation['priority']) {
+    return this.executeAsync(
+      async () => {
+        const conversation = await messagesApi.updatePriority(conversationId, priority)
+        // Convert date strings to Date objects
+        return {
+          ...conversation,
+          lastMessage: new Date(conversation.lastMessage),
+          messages: conversation.messages.map(msg => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp),
+          })),
+        }
+      },
+      {
+        onSuccess: (conversation) => {
+          const index = this.conversations.findIndex(c => c.id === conversationId)
+          if (index !== -1) {
+            this.conversations[index] = conversation
+          }
+          if (this.selectedConversation?.id === conversationId) {
+            this.selectedConversation = conversation
+          }
+        },
+      }
+    )
+  }
+
+  async archiveConversation(conversationId: string, archived: boolean = true) {
+    return this.executeAsync(
+      async () => {
+        const conversation = await messagesApi.archiveConversation(conversationId, archived)
+        // Convert date strings to Date objects
+        return {
+          ...conversation,
+          lastMessage: new Date(conversation.lastMessage),
+          messages: conversation.messages.map(msg => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp),
+          })),
+        }
+      },
+      {
+        onSuccess: (conversation) => {
+          const index = this.conversations.findIndex(c => c.id === conversationId)
+          if (index !== -1) {
+            this.conversations[index] = conversation
+          }
+          if (this.selectedConversation?.id === conversationId) {
+            this.selectedConversation = conversation
+          }
+        },
+      }
+    )
+  }
+
+  async addTag(conversationId: string, tag: string) {
+    return this.executeAsync(
+      async () => {
+        const conversation = await messagesApi.addTag(conversationId, tag)
+        // Convert date strings to Date objects
+        return {
+          ...conversation,
+          lastMessage: new Date(conversation.lastMessage),
+          messages: conversation.messages.map(msg => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp),
+          })),
+        }
+      },
+      {
+        onSuccess: (conversation) => {
+          const index = this.conversations.findIndex(c => c.id === conversationId)
+          if (index !== -1) {
+            this.conversations[index] = conversation
+          }
+          if (this.selectedConversation?.id === conversationId) {
+            this.selectedConversation = conversation
+          }
+        },
+      }
+    )
+  }
+
+  async fetchAIAnalysis(messageId: string) {
+    return this.executeAsync(
+      async () => {
+        const analysis = await messagesApi.getAIAnalysis(messageId)
+        return analysis
+      },
+      {
+        showLoading: false,
+      }
+    )
+  }
+
+  async generateSmartCompose(content: string) {
+    if (!this.selectedConversation) return
+
+    return this.executeAsync(
+      async () => {
+        const smartCompose = await messagesApi.smartCompose(this.selectedConversation!.id, content)
+        return smartCompose
+      },
+      {
+        onSuccess: (smartCompose) => {
+          this.smartCompose = smartCompose
+        },
+        showLoading: false,
+      }
+    )
+  }
+
+  async getMessageTemplates(category?: string): Promise<MessageTemplate[]> {
+    const result = await this.executeAsync(
+      async () => {
+        const templates = await messagesApi.getTemplates(category)
+        return templates
+      },
+      {
+        showLoading: false,
+      }
+    )
+    return result || []
+  }
+
 }

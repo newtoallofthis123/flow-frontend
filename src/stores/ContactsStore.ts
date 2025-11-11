@@ -57,6 +57,7 @@ export class ContactsStore extends BaseStore {
     atRisk: 0,
     needsFollowUp: 0,
   }
+  private _initialized = false
 
   constructor() {
     super()
@@ -80,7 +81,11 @@ export class ContactsStore extends BaseStore {
     // Auto-fetch when filter changes
     reaction(
       () => this.filterBy,
-      () => this.fetchContacts()
+      () => {
+        if (this._initialized) {
+          this.fetchContacts()
+        }
+      }
     )
 
     // Debounced search
@@ -90,10 +95,22 @@ export class ContactsStore extends BaseStore {
       () => {
         clearTimeout(searchTimeout)
         searchTimeout = setTimeout(() => {
-          this.fetchContacts()
+          if (this._initialized) {
+            this.fetchContacts()
+          }
         }, 300)
       }
     )
+  }
+
+  async initialize() {
+    if (this._initialized) return
+    this._initialized = true
+    
+    await Promise.all([
+      this.fetchContacts(),
+      this.fetchContactStats(),
+    ])
   }
 
   private setupWebSocket() {
@@ -123,6 +140,10 @@ export class ContactsStore extends BaseStore {
 
   // Computed values
   get filteredContacts() {
+    // Ensure contacts is always an array
+    if (!Array.isArray(this.contacts)) {
+      return []
+    }
     return this.contacts
       .filter(contact => {
         // Search filter
@@ -143,6 +164,54 @@ export class ContactsStore extends BaseStore {
     return this.stats
   }
 
+  // Transform API response to Contact interface
+  private transformContact(apiContact: any): Contact {
+    return {
+      id: apiContact.id,
+      name: apiContact.name,
+      email: apiContact.email,
+      phone: apiContact.phone,
+      company: apiContact.company,
+      title: apiContact.title,
+      avatar: apiContact.avatar_url || undefined,
+      relationshipHealth: apiContact.relationship_health || 'medium',
+      healthScore: apiContact.health_score || 0,
+      lastContact: new Date(apiContact.last_contact_at || apiContact.lastContact || Date.now()),
+      nextFollowUp: apiContact.next_follow_up_at ? new Date(apiContact.next_follow_up_at) : undefined,
+      sentiment: apiContact.sentiment || 'neutral',
+      churnRisk: apiContact.churn_risk || 0,
+      totalDeals: apiContact.total_deals_count || 0,
+      totalValue: parseFloat(apiContact.total_deals_value || '0'),
+      tags: Array.isArray(apiContact.tags) ? apiContact.tags : [],
+      notes: apiContact.notes 
+        ? (Array.isArray(apiContact.notes) ? apiContact.notes : [apiContact.notes])
+        : [],
+      communicationHistory: Array.isArray(apiContact.communicationHistory) 
+        ? apiContact.communicationHistory.map((event: any) => ({
+            id: event.id,
+            type: event.type,
+            date: new Date(event.date),
+            subject: event.subject,
+            summary: event.summary,
+            sentiment: event.sentiment || 'neutral',
+            aiAnalysis: event.aiAnalysis || event.ai_analysis,
+          }))
+        : [],
+      aiInsights: Array.isArray(apiContact.aiInsights)
+        ? apiContact.aiInsights.map((insight: any) => ({
+            id: insight.id,
+            type: insight.type,
+            title: insight.title,
+            description: insight.description,
+            confidence: insight.confidence || 0,
+            actionable: insight.actionable || false,
+            suggestedAction: insight.suggestedAction || insight.suggested_action,
+            date: new Date(insight.date),
+          }))
+        : [],
+    }
+  }
+
   // Actions
   async fetchContacts() {
     return this.executeAsync(
@@ -151,7 +220,10 @@ export class ContactsStore extends BaseStore {
           search: this.searchQuery || undefined,
           filter: this.filterBy,
         })
-        return contacts
+        // Transform API response to match Contact interface
+        return Array.isArray(contacts) 
+          ? contacts.map(contact => this.transformContact(contact))
+          : []
       },
       {
         onSuccess: (contacts) => {
@@ -180,7 +252,7 @@ export class ContactsStore extends BaseStore {
     return this.executeAsync(
       async () => {
         const contact = await contactsApi.getContact(id)
-        return contact
+        return this.transformContact(contact)
       },
       {
         onSuccess: (contact) => {
@@ -199,7 +271,7 @@ export class ContactsStore extends BaseStore {
     return this.executeAsync(
       async () => {
         const contact = await contactsApi.createContact(data)
-        return contact
+        return this.transformContact(contact)
       },
       {
         onSuccess: (contact) => {
@@ -214,7 +286,7 @@ export class ContactsStore extends BaseStore {
     return this.executeAsync(
       async () => {
         const contact = await contactsApi.updateContact(id, data)
-        return contact
+        return this.transformContact(contact)
       },
       {
         onSuccess: (contact) => {

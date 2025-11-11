@@ -1,4 +1,5 @@
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { createBrowserRouter, RouterProvider, Navigate, useLocation, useParams } from 'react-router-dom'
 import { StoreContext, rootStore } from './stores'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import Login from './pages/Login'
@@ -8,6 +9,25 @@ import Contacts from './pages/Contacts'
 import Deals from './pages/Deals'
 import Messages from './pages/Messages'
 import Calendar from './pages/Calendar'
+
+// Component to sync route changes with RootStore
+const RouteSync = ({ children }: { children: React.ReactNode }) => {
+  const location = useLocation()
+  const params = useParams()
+
+  useEffect(() => {
+    // Filter out undefined values from params
+    const cleanParams: Record<string, string> = {}
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined) {
+        cleanParams[key] = value
+      }
+    })
+    rootStore.setRoute(location.pathname, cleanParams)
+  }, [location.pathname, params])
+
+  return <>{children}</>
+}
 
 const RootRedirect = () => {
   const token = localStorage.getItem('auth_token')
@@ -30,7 +50,9 @@ const router = createBrowserRouter([
     path: '/dashboard',
     element: (
       <ProtectedRoute>
-        <Dashboard />
+        <RouteSync>
+          <Dashboard />
+        </RouteSync>
       </ProtectedRoute>
     )
   },
@@ -38,7 +60,9 @@ const router = createBrowserRouter([
     path: '/contacts',
     element: (
       <ProtectedRoute>
-        <Contacts />
+        <RouteSync>
+          <Contacts />
+        </RouteSync>
       </ProtectedRoute>
     )
   },
@@ -46,7 +70,9 @@ const router = createBrowserRouter([
     path: '/contacts/:id',
     element: (
       <ProtectedRoute>
-        <Contacts />
+        <RouteSync>
+          <Contacts />
+        </RouteSync>
       </ProtectedRoute>
     )
   },
@@ -54,7 +80,9 @@ const router = createBrowserRouter([
     path: '/deals',
     element: (
       <ProtectedRoute>
-        <Deals />
+        <RouteSync>
+          <Deals />
+        </RouteSync>
       </ProtectedRoute>
     )
   },
@@ -62,7 +90,9 @@ const router = createBrowserRouter([
     path: '/deals/:id',
     element: (
       <ProtectedRoute>
-        <Deals />
+        <RouteSync>
+          <Deals />
+        </RouteSync>
       </ProtectedRoute>
     )
   },
@@ -70,7 +100,9 @@ const router = createBrowserRouter([
     path: '/messages',
     element: (
       <ProtectedRoute>
-        <Messages />
+        <RouteSync>
+          <Messages />
+        </RouteSync>
       </ProtectedRoute>
     )
   },
@@ -78,7 +110,9 @@ const router = createBrowserRouter([
     path: '/messages/:id',
     element: (
       <ProtectedRoute>
-        <Messages />
+        <RouteSync>
+          <Messages />
+        </RouteSync>
       </ProtectedRoute>
     )
   },
@@ -86,7 +120,9 @@ const router = createBrowserRouter([
     path: '/calendar',
     element: (
       <ProtectedRoute>
-        <Calendar />
+        <RouteSync>
+          <Calendar />
+        </RouteSync>
       </ProtectedRoute>
     )
   },
@@ -94,7 +130,9 @@ const router = createBrowserRouter([
     path: '/calendar/:id',
     element: (
       <ProtectedRoute>
-        <Calendar />
+        <RouteSync>
+          <Calendar />
+        </RouteSync>
       </ProtectedRoute>
     )
   },
@@ -109,6 +147,11 @@ const router = createBrowserRouter([
 ])
 
 function App() {
+  useEffect(() => {
+    // Initialize the root store when app starts
+    rootStore.initialize()
+  }, [])
+
   return (
     <StoreContext.Provider value={rootStore}>
       <RouterProvider router={router} />

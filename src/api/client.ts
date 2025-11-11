@@ -122,7 +122,12 @@ class ApiClient {
       throw new ApiClientError(response.status, error.error || error)
     }
 
-    return response.json()
+    const json = await response.json()
+    // Unwrap { data: ... } format if present (all routes follow this format)
+    if (json && typeof json === 'object' && 'data' in json) {
+      return json.data as T
+    }
+    return json as T
   }
 
   async get<T>(endpoint: string, params?: Record<string, any>): Promise<T> {

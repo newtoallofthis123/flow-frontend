@@ -1,4 +1,4 @@
-import { makeObservable, observable, computed, action, runInAction } from 'mobx'
+import { makeObservable, observable, computed, action, runInAction, reaction } from 'mobx'
 import { dealsApi } from '../api/deals.api'
 import { BaseStore } from './BaseStore'
 import { wsClient } from '../api/websocket'
@@ -83,6 +83,8 @@ export class DealsStore extends BaseStore {
     monthlyForecast: 0,
   }
 
+  private _initialized = false
+
   constructor() {
     super()
     makeObservable(this, {
@@ -104,7 +106,45 @@ export class DealsStore extends BaseStore {
       selectDeal: action,
       setDraggedDeal: action,
     })
+    this.setupReactions()
     this.setupWebSocket()
+  }
+
+  private setupReactions() {
+    // Auto-fetch when filter changes
+    reaction(
+      () => this.filterBy,
+      () => {
+        if (this._initialized) {
+          this.fetchDeals()
+        }
+      }
+    )
+
+    // Debounced search
+    let searchTimeout: ReturnType<typeof setTimeout>
+    reaction(
+      () => this.searchQuery,
+      () => {
+        clearTimeout(searchTimeout)
+        searchTimeout = setTimeout(() => {
+          if (this._initialized) {
+            this.fetchDeals()
+          }
+        }, 300)
+      }
+    )
+  }
+
+  async initialize() {
+    if (this._initialized) return
+    this._initialized = true
+    
+    await Promise.all([
+      this.fetchDeals(),
+      this.fetchForecast(),
+      this.fetchStageStats(),
+    ])
   }
 
   private setupWebSocket() {
@@ -158,10 +198,15 @@ export class DealsStore extends BaseStore {
 
   // Computed values
   get stageStatsComputed(): StageStats[] {
-    return this.stageStats
+    // Ensure stageStats is always an array
+    return Array.isArray(this.stageStats) ? this.stageStats : []
   }
 
   get filteredDeals() {
+    // Ensure deals is always an array
+    if (!Array.isArray(this.deals)) {
+      return []
+    }
     let filtered = this.deals.filter(deal =>
       deal.stage !== 'closed-won' && deal.stage !== 'closed-lost'
     )
@@ -172,7 +217,7 @@ export class DealsStore extends BaseStore {
         break
       case 'at-risk':
         filtered = filtered.filter(deal =>
-          deal.riskFactors.length > 0 || deal.competitorMentioned
+          (deal.riskFactors && deal.riskFactors.length > 0) || deal.competitorMentioned
         )
         break
       case 'closing-soon':
@@ -209,6 +254,82 @@ export class DealsStore extends BaseStore {
   setDraggedDeal(deal: Deal | null) {
     this.draggedDeal = deal
   }
+
+  // Transform API response to Deal interface
+  private transformDeal(apiDeal: any): Deal {
+    // Handle date parsing - expected_close_date might be just a date string (YYYY-MM-DD)
+    const parseDate = (dateStr: string | null | undefined, fallback?: Date): Date => {
+      if (!dateStr) return fallback || new Date()
+      // Handle both ISO datetime strings and date-only strings
+      const date = new Date(dateStr)
+      return isNaN(date.getTime()) ? (fallback || new Date()) : date
+    }
+
+    // Use inserted_at for createdDate, fallback to updated_at or now
+    const createdDate = parseDate(
+      apiDeal.inserted_at || apiDeal.created_date || apiDeal.createdDate,
+      new Date()
+    )
+
+    // Use last_activity_at if available, otherwise fallback to inserted_at or now
+    const lastActivity = parseDate(
+      apiDeal.last_activity_at || apiDeal.last_activity || apiDeal.lastActivity,
+      createdDate
+    )
+
+    return {
+      id: apiDeal.id,
+      title: apiDeal.title || apiDeal.name || '',
+      contactId: apiDeal.contact_id || apiDeal.contactId || '',
+      contactName: apiDeal.contact_name || apiDeal.contactName || '', // May need to fetch separately
+      company: apiDeal.company || '',
+      value: parseFloat(apiDeal.value || apiDeal.amount || '0'),
+      stage: apiDeal.stage || 'prospect',
+      probability: apiDeal.probability || 0,
+      confidence: apiDeal.confidence || 'medium',
+      expectedCloseDate: parseDate(apiDeal.expected_close_date || apiDeal.expectedCloseDate),
+      createdDate,
+      lastActivity,
+      description: apiDeal.description || '',
+      tags: Array.isArray(apiDeal.tags) ? apiDeal.tags : [],
+      activities: Array.isArray(apiDeal.activities)
+        ? apiDeal.activities.map((activity: any) => ({
+            id: activity.id,
+            type: activity.type,
+            date: parseDate(activity.date),
+            description: activity.description || '',
+            outcome: activity.outcome,
+            nextStep: activity.nextStep || activity.next_step,
+          }))
+        : [],
+      aiInsights: Array.isArray(apiDeal.aiInsights)
+        ? apiDeal.aiInsights.map((insight: any) => ({
+            id: insight.id,
+            type: insight.type,
+            title: insight.title,
+            description: insight.description,
+            impact: insight.impact || 'medium',
+            actionable: insight.actionable || false,
+            suggestedAction: insight.suggestedAction || insight.suggested_action,
+            confidence: insight.confidence || 0,
+            date: parseDate(insight.date),
+          }))
+        : [],
+      competitorMentioned: apiDeal.competitor_mentioned || apiDeal.competitorMentioned || undefined,
+      riskFactors: Array.isArray(apiDeal.risk_factors) 
+        ? apiDeal.risk_factors 
+        : Array.isArray(apiDeal.riskFactors) 
+          ? apiDeal.riskFactors 
+          : [],
+      positiveSignals: Array.isArray(apiDeal.positive_signals)
+        ? apiDeal.positive_signals
+        : Array.isArray(apiDeal.positiveSignals)
+          ? apiDeal.positiveSignals
+          : [],
+      priority: apiDeal.priority || 'medium',
+    }
+  }
+
   async fetchDeals() {
     return this.executeAsync(
       async () => {
@@ -216,7 +337,10 @@ export class DealsStore extends BaseStore {
           filter: this.filterBy,
           search: this.searchQuery || undefined,
         })
-        return deals
+        // Transform API response to match Deal interface
+        return Array.isArray(deals)
+          ? deals.map(deal => this.transformDeal(deal))
+          : []
       },
       {
         onSuccess: (deals) => {
@@ -230,7 +354,7 @@ export class DealsStore extends BaseStore {
     return this.executeAsync(
       async () => {
         const deal = await dealsApi.getDeal(id)
-        return deal
+        return this.transformDeal(deal)
       },
       {
         onSuccess: (deal) => {
@@ -248,7 +372,7 @@ export class DealsStore extends BaseStore {
     return this.executeAsync(
       async () => {
         const deal = await dealsApi.createDeal(data)
-        return deal
+        return this.transformDeal(deal)
       },
       {
         onSuccess: (deal) => {
@@ -262,7 +386,7 @@ export class DealsStore extends BaseStore {
     return this.executeAsync(
       async () => {
         const deal = await dealsApi.updateDeal(id, data)
-        return deal
+        return this.transformDeal(deal)
       },
       {
         onSuccess: (deal) => {
@@ -361,7 +485,8 @@ export class DealsStore extends BaseStore {
     return this.executeAsync(
       async () => {
         const stats = await dealsApi.getStageStats()
-        return stats
+        // Transform object response to array format
+        return this.transformStageStats(stats)
       },
       {
         onSuccess: (stats) => {
@@ -370,5 +495,59 @@ export class DealsStore extends BaseStore {
         showLoading: false,
       }
     )
+  }
+
+  // Transform API response object to StageStats array
+  private transformStageStats(apiStats: any): StageStats[] {
+    // Handle both object and array formats
+    if (Array.isArray(apiStats)) {
+      return apiStats.map(stat => ({
+        stage: this.normalizeStageName(stat.stage),
+        count: stat.count || 0,
+        totalValue: stat.totalValue || stat.total_value || 0,
+        avgProbability: stat.avgProbability || stat.avg_probability || 0,
+        avgDaysInStage: stat.avgDaysInStage || stat.avg_days_in_stage || 0,
+      }))
+    }
+
+    // Transform object format: { prospect: 0, qualified: 1, closed_won: 0, ... }
+    const stages: DealStage[] = ['prospect', 'qualified', 'proposal', 'negotiation', 'closed-won', 'closed-lost']
+    
+    return stages.map(stage => {
+      // Map stage names (closed-won -> closed_won for API lookup)
+      // Try both formats: closed_won (API) and closed-won (our format)
+      const apiStageKey = stage.replace(/-/g, '_')
+      const count = apiStats[apiStageKey] !== undefined ? apiStats[apiStageKey] : (apiStats[stage] || 0)
+      
+      // Calculate stats from deals array for this stage
+      const dealsInStage = this.deals.filter(d => d.stage === stage)
+      const totalValue = dealsInStage.reduce((sum, deal) => sum + deal.value, 0)
+      const avgProbability = dealsInStage.length > 0
+        ? dealsInStage.reduce((sum, deal) => sum + deal.probability, 0) / dealsInStage.length
+        : 0
+      
+      // Calculate average days in stage (simplified - using createdDate as proxy)
+      const avgDaysInStage = dealsInStage.length > 0
+        ? dealsInStage.reduce((sum, deal) => {
+            const daysInStage = Math.floor((Date.now() - deal.createdDate.getTime()) / (1000 * 60 * 60 * 24))
+            return sum + daysInStage
+          }, 0) / dealsInStage.length
+        : 0
+
+      return {
+        stage,
+        count,
+        totalValue,
+        avgProbability: Math.round(avgProbability),
+        avgDaysInStage: Math.round(avgDaysInStage),
+      }
+    })
+  }
+
+  // Normalize stage names (closed_won -> closed-won)
+  private normalizeStageName(stage: string): DealStage {
+    const normalized = stage.replace(/_/g, '-')
+    const validStages: DealStage[] = ['prospect', 'qualified', 'proposal', 'negotiation', 'closed-won', 'closed-lost']
+    return validStages.includes(normalized as DealStage) ? (normalized as DealStage) : 'prospect'
   }
 }

@@ -4,7 +4,6 @@ import AIForecastCard from '../components/dashboard/AIForecastCard'
 import SmartActionFeed from '../components/dashboard/SmartActionFeed'
 
 const Dashboard = observer(() => {
-
   return (
     <MainLayout>
       <div className="p-8">

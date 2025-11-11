@@ -53,9 +53,9 @@ const SmartActionFeed = observer(() => {
     }
   }
 
-  const handleAction = (actionType: string, itemId: string) => {
+  const handleAction = async (actionType: string, itemId: string) => {
     if (actionType === 'dismiss') {
-      dashboardStore.dismissActionItem(itemId)
+      await dashboardStore.dismissActionItem(itemId)
     } else {
       console.log(`Executing action: ${actionType} for item: ${itemId}`)
     }

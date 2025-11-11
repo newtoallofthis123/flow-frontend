@@ -48,9 +48,9 @@ const Messages = observer(() => {
     'price discussions'
   ]
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (id && messagesStore.composingMessage.trim()) {
-      messagesStore.sendMessage(id, messagesStore.composingMessage)
+      await messagesStore.sendMessage(id, messagesStore.composingMessage)
     }
   }
 

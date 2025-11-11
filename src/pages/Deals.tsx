@@ -34,10 +34,10 @@ const Deals = observer(() => {
   }
 
   const searchFilters = [
-    { id: 'all', label: 'All Deals', count: dealsStore.filteredDeals.length },
-    { id: 'hot', label: 'Hot Deals', count: dealsStore.deals.filter(d => d.probability > 70).length },
-    { id: 'at-risk', label: 'At Risk', count: dealsStore.deals.filter(d => d.riskFactors.length > 0).length },
-    { id: 'closing-soon', label: 'Closing Soon', count: dealsStore.deals.filter(d => {
+    { id: 'all', label: 'All Deals', count: dealsStore.filteredDeals?.length || 0 },
+    { id: 'hot', label: 'Hot Deals', count: (dealsStore.deals || []).filter(d => d.probability > 70).length },
+    { id: 'at-risk', label: 'At Risk', count: (dealsStore.deals || []).filter(d => (d.riskFactors && d.riskFactors.length > 0)).length },
+    { id: 'closing-soon', label: 'Closing Soon', count: (dealsStore.deals || []).filter(d => {
       const thirtyDaysFromNow = new Date()
       thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30)
       return d.expectedCloseDate <= thirtyDaysFromNow
@@ -137,7 +137,7 @@ const Deals = observer(() => {
         </div>
 
         {/* Risk Factors */}
-        {deal.riskFactors.length > 0 && (
+        {deal.riskFactors && deal.riskFactors.length > 0 && (
           <div className="flex items-center space-x-1">
             <AlertTriangle className="w-3 h-3 text-red-400" />
             <span className="text-xs text-red-400">
@@ -156,7 +156,7 @@ const Deals = observer(() => {
       </div>
 
       {/* Tags */}
-      {deal.tags.length > 0 && (
+      {deal.tags && deal.tags.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {deal.tags.slice(0, 2).map((tag) => (
             <span key={tag} className="px-2 py-0.5 bg-secondary text-secondary-foreground text-xs rounded">
@@ -174,7 +174,9 @@ const Deals = observer(() => {
   )
 
   const KanbanColumn = ({ stage, deals }: { stage: DealStage; deals: Deal[] }) => {
-    const stageStats = dealsStore.stageStats.find(s => s.stage === stage)
+    const stageStats = Array.isArray(dealsStore.stageStats) 
+      ? dealsStore.stageStats.find(s => s.stage === stage)
+      : undefined
     const totalValue = deals.reduce((sum, deal) => sum + deal.value, 0)
 
     return (
@@ -227,7 +229,7 @@ const Deals = observer(() => {
               <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                 <div className="flex items-center space-x-1">
                   <Target className="w-4 h-4" />
-                  <span>{dealsStore.filteredDeals.length} active deals</span>
+                  <span>{dealsStore.filteredDeals?.length || 0} active deals</span>
                 </div>
                 <div className="flex items-center space-x-1">
                   <DollarSign className="w-4 h-4" />
@@ -262,7 +264,7 @@ const Deals = observer(() => {
         {/* Pipeline Stats */}
         <div className="p-6 border-b border-border bg-card/20">
           <div className="grid grid-cols-4 gap-6">
-            {dealsStore.stageStats.map((stat) => (
+            {(Array.isArray(dealsStore.stageStats) ? dealsStore.stageStats : []).map((stat) => (
               <div key={stat.stage} className="bg-card rounded-lg p-4 border border-border">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className={`font-semibold ${getStageColor(stat.stage)}`}>
@@ -295,7 +297,7 @@ const Deals = observer(() => {
                 <KanbanColumn
                   key={stage}
                   stage={stage}
-                  deals={dealsStore.dealsByStage[stage] || []}
+                  deals={(dealsStore.dealsByStage && dealsStore.dealsByStage[stage]) || []}
                 />
               ))}
             </div>
@@ -367,7 +369,7 @@ const Deals = observer(() => {
                 <span>AI Insights</span>
               </h4>
               <div className="space-y-4">
-                {selectedDeal.aiInsights.map((insight) => (
+                {(selectedDeal.aiInsights || []).map((insight) => (
                   <AIInsight
                     key={insight.id}
                     type={insight.type}
@@ -385,7 +387,7 @@ const Deals = observer(() => {
             </div>
 
             {/* Positive Signals */}
-            {selectedDeal.positiveSignals.length > 0 && (
+            {selectedDeal.positiveSignals && selectedDeal.positiveSignals.length > 0 && (
               <div className="mb-6">
                 <h4 className="font-semibold text-sidebar-foreground mb-3 flex items-center space-x-2">
                   <TrendingUp className="w-4 h-4 text-green-400" />
@@ -403,7 +405,7 @@ const Deals = observer(() => {
             )}
 
             {/* Risk Factors */}
-            {selectedDeal.riskFactors.length > 0 && (
+            {selectedDeal.riskFactors && selectedDeal.riskFactors.length > 0 && (
               <div className="mb-6">
                 <h4 className="font-semibold text-sidebar-foreground mb-3 flex items-center space-x-2">
                   <AlertTriangle className="w-4 h-4 text-red-400" />
@@ -424,7 +426,7 @@ const Deals = observer(() => {
             <div className="mb-6">
               <h4 className="font-semibold text-sidebar-foreground mb-3">Recent Activities</h4>
               <div className="space-y-3">
-                {selectedDeal.activities.slice(0, 3).map((activity) => (
+                {(selectedDeal.activities || []).slice(0, 3).map((activity) => (
                   <div key={activity.id} className="p-3 bg-card rounded-lg border border-border">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium text-card-foreground capitalize">

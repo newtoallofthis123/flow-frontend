@@ -1,5 +1,5 @@
 import { apiClient } from './client'
-import type { Deal, DealActivity, DealInsight, DealStage, StageStats } from '../stores/DealsStore'
+import type { Deal, DealActivity, DealStage, StageStats } from '../stores/DealsStore'
 
 export const dealsApi = {
   // GET /api/deals
