@@ -1,4 +1,7 @@
-import { makeAutoObservable } from 'mobx'
+import { makeObservable, observable, computed, action, runInAction, reaction } from 'mobx'
+import { contactsApi } from '../api/contacts.api'
+import { BaseStore } from './BaseStore'
+import { wsClient } from '../api/websocket'
 
 export interface Contact {
   id: string
@@ -43,58 +46,259 @@ export interface AIInsight {
   date: Date
 }
 
-export class ContactsStore {
+export class ContactsStore extends BaseStore {
   contacts: Contact[] = []
   selectedContact: Contact | null = null
   searchQuery = ''
   filterBy: 'all' | 'high-value' | 'at-risk' | 'recent' = 'all'
-  isLoading = false
-
-  constructor() {
-    makeAutoObservable(this)
-    this.loadMockData()
+  stats = {
+    total: 0,
+    highValue: 0,
+    atRisk: 0,
+    needsFollowUp: 0,
   }
 
+  constructor() {
+    super()
+    makeObservable(this, {
+      contacts: observable,
+      selectedContact: observable,
+      searchQuery: observable,
+      filterBy: observable,
+      stats: observable,
+      filteredContacts: computed,
+      contactStats: computed,
+      setSearchQuery: action,
+      setFilter: action,
+      selectContact: action,
+    })
+    this.setupReactions()
+    this.setupWebSocket()
+  }
+
+  private setupReactions() {
+    // Auto-fetch when filter changes
+    reaction(
+      () => this.filterBy,
+      () => this.fetchContacts()
+    )
+
+    // Debounced search
+    let searchTimeout: ReturnType<typeof setTimeout>
+    reaction(
+      () => this.searchQuery,
+      () => {
+        clearTimeout(searchTimeout)
+        searchTimeout = setTimeout(() => {
+          this.fetchContacts()
+        }, 300)
+      }
+    )
+  }
+
+  private setupWebSocket() {
+    wsClient.on('contact:updated', (data: { id: string; changes: Partial<Contact> }) => {
+      runInAction(() => {
+        const contact = this.contacts.find(c => c.id === data.id)
+        if (contact) {
+          Object.assign(contact, data.changes)
+        }
+        if (this.selectedContact?.id === data.id) {
+          Object.assign(this.selectedContact, data.changes)
+        }
+      })
+    })
+
+    wsClient.on('contact:health_changed', (data: { id: string; oldScore: number; newScore: number }) => {
+      runInAction(() => {
+        const contact = this.contacts.find(c => c.id === data.id)
+        if (contact) {
+          contact.healthScore = data.newScore
+          contact.relationshipHealth = 
+            data.newScore > 70 ? 'high' : data.newScore > 40 ? 'medium' : 'low'
+        }
+      })
+    })
+  }
+
+  // Computed values
   get filteredContacts() {
-    let filtered = this.contacts
-
-    // Search filter
-    if (this.searchQuery) {
-      const query = this.searchQuery.toLowerCase()
-      filtered = filtered.filter(contact =>
-        contact.name.toLowerCase().includes(query) ||
-        contact.company.toLowerCase().includes(query) ||
-        contact.email.toLowerCase().includes(query)
-      )
-    }
-
-    // Category filter
-    switch (this.filterBy) {
-      case 'high-value':
-        filtered = filtered.filter(contact => contact.totalValue > 50000)
-        break
-      case 'at-risk':
-        filtered = filtered.filter(contact => contact.churnRisk > 60)
-        break
-      case 'recent':
-        const oneWeekAgo = new Date()
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
-        filtered = filtered.filter(contact => contact.lastContact > oneWeekAgo)
-        break
-    }
-
-    return filtered.slice().sort((a, b) => b.healthScore - a.healthScore)
+    return this.contacts
+      .filter(contact => {
+        // Search filter
+        if (this.searchQuery) {
+          const query = this.searchQuery.toLowerCase()
+          return (
+            contact.name.toLowerCase().includes(query) ||
+            contact.company.toLowerCase().includes(query) ||
+            contact.email.toLowerCase().includes(query)
+          )
+        }
+        return true
+      })
+      .sort((a, b) => b.healthScore - a.healthScore)
   }
 
   get contactStats() {
-    return {
-      total: this.contacts.length,
-      highValue: this.contacts.filter(c => c.totalValue > 50000).length,
-      atRisk: this.contacts.filter(c => c.churnRisk > 60).length,
-      needsFollowUp: this.contacts.filter(c => c.nextFollowUp && c.nextFollowUp < new Date()).length
-    }
+    return this.stats
   }
 
+  // Actions
+  async fetchContacts() {
+    return this.executeAsync(
+      async () => {
+        const contacts = await contactsApi.getContacts({
+          search: this.searchQuery || undefined,
+          filter: this.filterBy,
+        })
+        return contacts
+      },
+      {
+        onSuccess: (contacts) => {
+          this.contacts = contacts
+        },
+      }
+    )
+  }
+
+  async fetchContactStats() {
+    return this.executeAsync(
+      async () => {
+        const stats = await contactsApi.getStats()
+        return stats
+      },
+      {
+        onSuccess: (stats) => {
+          this.stats = stats
+        },
+        showLoading: false,
+      }
+    )
+  }
+
+  async fetchContact(id: string) {
+    return this.executeAsync(
+      async () => {
+        const contact = await contactsApi.getContact(id)
+        return contact
+      },
+      {
+        onSuccess: (contact) => {
+          this.selectedContact = contact
+          // Update in list if exists
+          const index = this.contacts.findIndex(c => c.id === contact.id)
+          if (index !== -1) {
+            this.contacts[index] = contact
+          }
+        },
+      }
+    )
+  }
+
+  async createContact(data: Omit<Contact, 'id' | 'healthScore' | 'churnRisk'>) {
+    return this.executeAsync(
+      async () => {
+        const contact = await contactsApi.createContact(data)
+        return contact
+      },
+      {
+        onSuccess: (contact) => {
+          this.contacts.unshift(contact)
+          this.fetchContactStats()
+        },
+      }
+    )
+  }
+
+  async updateContact(id: string, data: Partial<Contact>) {
+    return this.executeAsync(
+      async () => {
+        const contact = await contactsApi.updateContact(id, data)
+        return contact
+      },
+      {
+        onSuccess: (contact) => {
+          const index = this.contacts.findIndex(c => c.id === id)
+          if (index !== -1) {
+            this.contacts[index] = contact
+          }
+          if (this.selectedContact?.id === id) {
+            this.selectedContact = contact
+          }
+        },
+      }
+    )
+  }
+
+  async deleteContact(id: string) {
+    return this.executeAsync(
+      async () => {
+        await contactsApi.deleteContact(id)
+      },
+      {
+        onSuccess: () => {
+          this.contacts = this.contacts.filter(c => c.id !== id)
+          if (this.selectedContact?.id === id) {
+            this.selectedContact = null
+          }
+          this.fetchContactStats()
+        },
+      }
+    )
+  }
+
+  async addCommunication(
+    contactId: string,
+    data: {
+      type: 'email' | 'call' | 'meeting' | 'note'
+      date: Date
+      subject?: string
+      summary: string
+    }
+  ) {
+    return this.executeAsync(
+      async () => {
+        const event = await contactsApi.addCommunication(contactId, data)
+        return event
+      },
+      {
+        onSuccess: (event) => {
+          const contact = this.contacts.find(c => c.id === contactId)
+          if (contact) {
+            contact.communicationHistory.unshift(event)
+            contact.lastContact = event.date
+          }
+          if (this.selectedContact?.id === contactId) {
+            this.selectedContact.communicationHistory.unshift(event)
+            this.selectedContact.lastContact = event.date
+          }
+        },
+      }
+    )
+  }
+
+  async fetchAIInsights(contactId: string) {
+    return this.executeAsync(
+      async () => {
+        const insights = await contactsApi.getAIInsights(contactId)
+        return insights
+      },
+      {
+        onSuccess: (insights) => {
+          const contact = this.contacts.find(c => c.id === contactId)
+          if (contact) {
+            contact.aiInsights = insights
+          }
+          if (this.selectedContact?.id === contactId) {
+            this.selectedContact.aiInsights = insights
+          }
+        },
+        showLoading: false,
+      }
+    )
+  }
+
+  // Local state actions
   setSearchQuery = (query: string) => {
     this.searchQuery = query
   }
@@ -103,199 +307,7 @@ export class ContactsStore {
     this.filterBy = filter
   }
 
-  selectContact = (contact: Contact) => {
+  selectContact = (contact: Contact | null) => {
     this.selectedContact = contact
-  }
-
-  updateContactHealth = (contactId: string, healthScore: number) => {
-    const contact = this.contacts.find(c => c.id === contactId)
-    if (contact) {
-      contact.healthScore = healthScore
-      contact.relationshipHealth = healthScore > 70 ? 'high' : healthScore > 40 ? 'medium' : 'low'
-    }
-  }
-
-  addCommunicationEvent = (contactId: string, event: Omit<CommunicationEvent, 'id'>) => {
-    const contact = this.contacts.find(c => c.id === contactId)
-    if (contact) {
-      contact.communicationHistory.unshift({
-        ...event,
-        id: Date.now().toString()
-      })
-      contact.lastContact = event.date
-    }
-  }
-
-  private loadMockData = () => {
-    this.contacts = [
-      {
-        id: '1',
-        name: 'Sarah Williams',
-        email: 'sarah.williams@techcorp.com',
-        phone: '+1 (555) 123-4567',
-        company: 'TechCorp Solutions',
-        title: 'VP of Engineering',
-        relationshipHealth: 'high',
-        healthScore: 89,
-        lastContact: new Date('2024-01-15'),
-        nextFollowUp: new Date('2024-01-20'),
-        sentiment: 'positive',
-        churnRisk: 15,
-        totalDeals: 3,
-        totalValue: 125000,
-        tags: ['enterprise', 'technical', 'decision-maker'],
-        notes: ['Prefers technical deep-dives', 'Budget discussions in Q1'],
-        communicationHistory: [
-          {
-            id: '1',
-            type: 'email',
-            date: new Date('2024-01-15'),
-            subject: 'Q1 Budget Planning',
-            summary: 'Discussed budget allocation for Q1 initiatives',
-            sentiment: 'positive',
-            aiAnalysis: 'Sarah is very engaged and mentioned specific budget figures. High probability of closing deal.'
-          },
-          {
-            id: '2',
-            type: 'call',
-            date: new Date('2024-01-10'),
-            summary: '30-min demo call - very positive feedback on new features',
-            sentiment: 'positive',
-            aiAnalysis: 'Enthusiastic about integration capabilities. Asked about enterprise pricing tiers.'
-          }
-        ],
-        aiInsights: [
-          {
-            id: '1',
-            type: 'opportunity',
-            title: 'Ready to Expand',
-            description: 'Recent communications indicate readiness to expand usage across additional teams',
-            confidence: 87,
-            actionable: true,
-            suggestedAction: 'Propose enterprise package upgrade',
-            date: new Date('2024-01-16')
-          }
-        ]
-      },
-      {
-        id: '2',
-        name: 'Mike Chen',
-        email: 'mchen@startup.io',
-        phone: '+1 (555) 234-5678',
-        company: 'Startup.io',
-        title: 'CTO',
-        relationshipHealth: 'medium',
-        healthScore: 65,
-        lastContact: new Date('2024-01-05'),
-        sentiment: 'neutral',
-        churnRisk: 35,
-        totalDeals: 1,
-        totalValue: 25000,
-        tags: ['startup', 'cost-conscious', 'technical'],
-        notes: ['Price sensitive', 'Growing team rapidly'],
-        communicationHistory: [
-          {
-            id: '3',
-            type: 'email',
-            date: new Date('2024-01-05'),
-            subject: 'Pricing Questions',
-            summary: 'Asked about volume discounts for growing team',
-            sentiment: 'neutral',
-            aiAnalysis: 'Concerned about scaling costs but interested in product. Mention ROI and cost per user benefits.'
-          }
-        ],
-        aiInsights: [
-          {
-            id: '2',
-            type: 'risk',
-            title: 'Price Sensitivity',
-            description: 'Multiple mentions of budget constraints and pricing concerns',
-            confidence: 73,
-            actionable: true,
-            suggestedAction: 'Schedule call to discuss ROI and flexible pricing options',
-            date: new Date('2024-01-16')
-          }
-        ]
-      },
-      {
-        id: '3',
-        name: 'Emma Rodriguez',
-        email: 'emma@globalcorp.com',
-        phone: '+1 (555) 345-6789',
-        company: 'GlobalCorp',
-        title: 'Director of Operations',
-        relationshipHealth: 'low',
-        healthScore: 32,
-        lastContact: new Date('2023-12-20'),
-        nextFollowUp: new Date('2024-01-10'),
-        sentiment: 'negative',
-        churnRisk: 78,
-        totalDeals: 2,
-        totalValue: 85000,
-        tags: ['enterprise', 'at-risk', 'decision-maker'],
-        notes: ['Mentioned competitor evaluation', 'Frustrated with recent issues'],
-        communicationHistory: [
-          {
-            id: '4',
-            type: 'call',
-            date: new Date('2023-12-20'),
-            summary: 'Support escalation call - discussed recent service issues',
-            sentiment: 'negative',
-            aiAnalysis: 'Frustrated with response times. Mentioned evaluating alternatives. Immediate attention needed.'
-          }
-        ],
-        aiInsights: [
-          {
-            id: '3',
-            type: 'risk',
-            title: 'High Churn Risk',
-            description: 'No recent positive interactions, mentioned competitors, past service issues',
-            confidence: 92,
-            actionable: true,
-            suggestedAction: 'Urgent: Schedule executive-level call to address concerns',
-            date: new Date('2024-01-16')
-          }
-        ]
-      },
-      {
-        id: '4',
-        name: 'David Park',
-        email: 'dpark@innovatetech.com',
-        phone: '+1 (555) 456-7890',
-        company: 'InnovateTech',
-        title: 'Head of Product',
-        relationshipHealth: 'high',
-        healthScore: 94,
-        lastContact: new Date('2024-01-14'),
-        sentiment: 'positive',
-        churnRisk: 8,
-        totalDeals: 4,
-        totalValue: 200000,
-        tags: ['enterprise', 'champion', 'product-focused'],
-        notes: ['Internal champion', 'Drives adoption across org'],
-        communicationHistory: [
-          {
-            id: '5',
-            type: 'meeting',
-            date: new Date('2024-01-14'),
-            summary: 'Quarterly business review - excellent results, discussing expansion',
-            sentiment: 'positive',
-            aiAnalysis: 'Very satisfied with results. Ready to expand to 3 additional teams. Strong renewal likelihood.'
-          }
-        ],
-        aiInsights: [
-          {
-            id: '4',
-            type: 'opportunity',
-            title: 'Expansion Ready',
-            description: 'Quarterly review showed excellent ROI, discussing 3x team expansion',
-            confidence: 96,
-            actionable: true,
-            suggestedAction: 'Prepare expansion proposal for 3 additional teams',
-            date: new Date('2024-01-16')
-          }
-        ]
-      }
-    ]
   }
 }
