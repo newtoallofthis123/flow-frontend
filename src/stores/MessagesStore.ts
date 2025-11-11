@@ -199,6 +199,10 @@ export class MessagesStore extends BaseStore {
   }
 
   get filteredConversations() {
+    // Ensure conversations is always an array
+    if (!Array.isArray(this.conversations)) {
+      return []
+    }
     let filtered = this.conversations
 
     // Search filter
@@ -220,7 +224,7 @@ export class MessagesStore extends BaseStore {
         filtered = filtered.filter(conv => conv.priority === 'high')
         break
       case 'follow-up':
-        filtered = filtered.filter(conv => conv.tags.includes('follow-up'))
+        filtered = filtered.filter(conv => conv.tags && conv.tags.includes('follow-up'))
         break
     }
 
@@ -253,6 +257,48 @@ export class MessagesStore extends BaseStore {
     }
   }
 
+  // Transform API response to Conversation interface
+  private transformConversation(apiConv: any): Conversation {
+    const parseDate = (dateStr: string | null | undefined, fallback?: Date): Date => {
+      if (!dateStr) return fallback || new Date()
+      const date = new Date(dateStr)
+      return isNaN(date.getTime()) ? (fallback || new Date()) : date
+    }
+
+    return {
+      id: apiConv.id,
+      contactId: apiConv.contact_id || apiConv.contactId || '',
+      contactName: apiConv.contact_name || apiConv.contactName || '', // May need to fetch separately
+      contactCompany: apiConv.contact_company || apiConv.contactCompany || '', // May need to fetch separately
+      lastMessage: parseDate(apiConv.last_message_at || apiConv.lastMessage),
+      unreadCount: apiConv.unread_count || apiConv.unreadCount || 0,
+      messages: Array.isArray(apiConv.messages)
+        ? apiConv.messages.map((msg: any) => ({
+            id: msg.id,
+            conversationId: msg.conversation_id || msg.conversationId || apiConv.id,
+            senderId: msg.sender_id || msg.senderId || '',
+            senderName: msg.sender_name || msg.senderName || '',
+            senderType: msg.sender_type || msg.senderType || 'contact',
+            content: msg.content || '',
+            timestamp: parseDate(msg.timestamp || msg.created_at),
+            type: msg.type || 'email',
+            subject: msg.subject,
+            sentiment: msg.sentiment || 'neutral',
+            confidence: msg.confidence || 0,
+            aiAnalysis: msg.aiAnalysis || msg.ai_analysis,
+            attachments: Array.isArray(msg.attachments) ? msg.attachments : [],
+            status: msg.status || 'sent',
+          }))
+        : [],
+      overallSentiment: apiConv.overall_sentiment || apiConv.overallSentiment || 'neutral',
+      sentimentTrend: apiConv.sentiment_trend || apiConv.sentimentTrend || 'stable',
+      aiSummary: apiConv.ai_summary || apiConv.aiSummary || '',
+      tags: Array.isArray(apiConv.tags) ? apiConv.tags : [],
+      priority: apiConv.priority || 'medium',
+      archived: apiConv.archived || false,
+    }
+  }
+
   async fetchConversations() {
     return this.executeAsync(
       async () => {
@@ -260,15 +306,10 @@ export class MessagesStore extends BaseStore {
           filter: this.filterBy,
           search: this.searchQuery || undefined,
         })
-        // Convert date strings to Date objects
-        return conversations.map(conv => ({
-          ...conv,
-          lastMessage: new Date(conv.lastMessage),
-          messages: conv.messages.map(msg => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp),
-          })),
-        }))
+        // Transform API response to match Conversation interface
+        return Array.isArray(conversations)
+          ? conversations.map(conv => this.transformConversation(conv))
+          : []
       },
       {
         onSuccess: (conversations) => {
@@ -282,15 +323,7 @@ export class MessagesStore extends BaseStore {
     return this.executeAsync(
       async () => {
         const conversation = await messagesApi.getConversation(id)
-        // Convert date strings to Date objects
-        return {
-          ...conversation,
-          lastMessage: new Date(conversation.lastMessage),
-          messages: conversation.messages.map(msg => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp),
-          })),
-        }
+        return this.transformConversation(conversation)
       },
       {
         onSuccess: (conversation) => {

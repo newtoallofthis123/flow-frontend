@@ -68,7 +68,11 @@ export class RootStore {
             this.dealsStore.fetchDeal(dealId)
           }
         } else if (route.startsWith('/messages')) {
-          this.messagesStore.initialize()
+          // Initialize both messages and contacts (conversations need contact info)
+          Promise.all([
+            this.messagesStore.initialize(),
+            this.contactsStore.initialize(),
+          ])
           // Fetch specific conversation if ID is present
           const conversationId = this.routeParams.id
           if (conversationId && conversationId !== this.messagesStore.selectedConversation?.id) {

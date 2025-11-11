@@ -7,13 +7,22 @@ import { MessageSquare, Send, Phone, Mail, Calendar, Building, User, Brain, Ligh
 import { useParams, useNavigate } from 'react-router-dom'
 
 const Messages = observer(() => {
-  const { messagesStore } = useStore()
+  const { messagesStore, contactsStore } = useStore()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
 
   const selectedConversation = id
     ? messagesStore.conversations.find(c => c.id === id)
     : null
+
+  // Helper to get contact name/company, with fallback
+  const getContactInfo = (contactId: string) => {
+    const contact = contactsStore.contacts.find(c => c.id === contactId)
+    return {
+      name: contact?.name || 'Unknown Contact',
+      company: contact?.company || 'Unknown Company',
+    }
+  }
 
   const formatDate = (date: Date) => {
     const now = new Date()
@@ -143,7 +152,9 @@ const Messages = observer(() => {
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center space-x-2 mb-1">
-                        <h3 className="text-sm font-semibold text-card-foreground truncate">{conversation.contactName}</h3>
+                        <h3 className="text-sm font-semibold text-card-foreground truncate">
+                          {conversation.contactName || getContactInfo(conversation.contactId).name}
+                        </h3>
                         {conversation.unreadCount > 0 && (
                           <span className="px-2 py-0.5 bg-primary text-primary-foreground text-xs rounded-full">
                             {conversation.unreadCount}
@@ -152,7 +163,9 @@ const Messages = observer(() => {
                       </div>
                       <div className="flex items-center space-x-1 text-xs text-muted-foreground/70">
                         <Building className="w-3 h-3" />
-                        <span className="truncate">{conversation.contactCompany}</span>
+                        <span className="truncate">
+                          {conversation.contactCompany || getContactInfo(conversation.contactId).company}
+                        </span>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2 ml-2">
@@ -174,7 +187,7 @@ const Messages = observer(() => {
                   </div>
 
                   {/* Tags */}
-                  {conversation.tags.length > 0 && (
+                  {conversation.tags && conversation.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1">
                       {conversation.tags.slice(0, 3).map((tag) => (
                         <span key={tag} className="px-2 py-0.5 bg-secondary text-secondary-foreground text-xs rounded">
@@ -204,14 +217,16 @@ const Messages = observer(() => {
                   <div className="flex items-center space-x-4">
                     <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
                       <span className="text-primary-foreground font-bold">
-                        {selectedConversation.contactName.charAt(0)}
+                        {(selectedConversation.contactName || getContactInfo(selectedConversation.contactId).name).charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-foreground">{selectedConversation.contactName}</h2>
+                      <h2 className="text-xl font-bold text-foreground">
+                        {selectedConversation.contactName || getContactInfo(selectedConversation.contactId).name}
+                      </h2>
                       <div className="flex items-center space-x-1 text-muted-foreground">
                         <Building className="w-4 h-4" />
-                        <span>{selectedConversation.contactCompany}</span>
+                        <span>{selectedConversation.contactCompany || getContactInfo(selectedConversation.contactId).company}</span>
                       </div>
                     </div>
                   </div>
@@ -242,7 +257,7 @@ const Messages = observer(() => {
               {/* Messages */}
               <div className="flex-1 overflow-y-auto p-6">
                 <div className="space-y-6">
-                  {selectedConversation.messages.map((message) => (
+                  {(selectedConversation.messages || []).map((message) => (
                     <div key={message.id} className="flex space-x-4">
                       {/* Avatar */}
                       <div className="w-8 h-8 bg-secondary rounded-lg flex items-center justify-center flex-shrink-0">
@@ -316,7 +331,7 @@ const Messages = observer(() => {
                                   </div>
                                 </div>
 
-                                {message.aiAnalysis.keyTopics.length > 0 && (
+                                {message.aiAnalysis.keyTopics && message.aiAnalysis.keyTopics.length > 0 && (
                                   <div className="mb-3">
                                     <span className="text-xs text-muted-foreground uppercase tracking-wide">Key Topics</span>
                                     <div className="flex flex-wrap gap-1 mt-1">
@@ -329,7 +344,7 @@ const Messages = observer(() => {
                                   </div>
                                 )}
 
-                                {message.aiAnalysis.actionItems.length > 0 && (
+                                {message.aiAnalysis.actionItems && message.aiAnalysis.actionItems.length > 0 && (
                                   <div>
                                     <span className="text-xs text-muted-foreground uppercase tracking-wide">Action Items</span>
                                     <ul className="mt-1 space-y-1">
@@ -374,7 +389,7 @@ const Messages = observer(() => {
                       <span className="text-sm font-semibold text-card-foreground">AI Writing Assistant</span>
                     </div>
 
-                    {messagesStore.smartCompose.suggestions.length > 0 && (
+                    {messagesStore.smartCompose && messagesStore.smartCompose.suggestions && messagesStore.smartCompose.suggestions.length > 0 && (
                       <div className="mb-3">
                         <span className="text-xs text-primary uppercase tracking-wide">Quick Suggestions</span>
                         <div className="flex flex-wrap gap-2 mt-1">
@@ -391,23 +406,25 @@ const Messages = observer(() => {
                       </div>
                     )}
 
-                    <div className="flex items-center space-x-4 text-xs">
-                      <div className="flex items-center space-x-1">
-                        <Zap className="w-3 h-3 text-yellow-400" />
-                        <span className="text-muted-foreground">Current tone: {messagesStore.smartCompose.toneAdjustments.current}</span>
+                    {messagesStore.smartCompose && messagesStore.smartCompose.toneAdjustments && (
+                      <div className="flex items-center space-x-4 text-xs">
+                        <div className="flex items-center space-x-1">
+                          <Zap className="w-3 h-3 text-yellow-400" />
+                          <span className="text-muted-foreground">Current tone: {messagesStore.smartCompose.toneAdjustments.current}</span>
+                        </div>
+                        <div className="flex space-x-2">
+                          {(messagesStore.smartCompose.toneAdjustments.alternatives || []).map((alt, index) => (
+                            <button
+                              key={index}
+                              className="text-primary hover:text-primary/80 transition-colors"
+                              title={alt.preview}
+                            >
+                              {alt.tone}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                      <div className="flex space-x-2">
-                        {messagesStore.smartCompose.toneAdjustments.alternatives.map((alt, index) => (
-                          <button
-                            key={index}
-                            className="text-primary hover:text-primary/80 transition-colors"
-                            title={alt.preview}
-                          >
-                            {alt.tone}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                    )}
                   </div>
                 )}
 
