@@ -3,7 +3,7 @@ import { useStore } from '../stores'
 import MainLayout from '../components/layout/MainLayout'
 import SearchBar from '../components/ui/SearchBar'
 import SentimentIndicator from '../components/ui/SentimentIndicator'
-import { MessageSquare, Send, Phone, Mail, Calendar, Building, User, Brain, Lightbulb, Zap, Clock, Paperclip, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { MessageSquare, Send, Phone, Mail, Calendar, Building, User, Brain, Lightbulb, Zap, Clock, Paperclip, TrendingUp, TrendingDown, Minus, Smile } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
 
 const Messages = observer(() => {
