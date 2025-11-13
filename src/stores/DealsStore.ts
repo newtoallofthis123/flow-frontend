@@ -255,6 +255,19 @@ export class DealsStore extends BaseStore {
     this.draggedDeal = deal
   }
 
+  // Helper function to extract tag names from tag objects or strings
+  private extractTagNames(tags: any[]): string[] {
+    if (!Array.isArray(tags)) return []
+    return tags.map(tag => {
+      // If tag is already a string, return it
+      if (typeof tag === 'string') return tag
+      // If tag is an object, extract the name property
+      if (tag && typeof tag === 'object' && 'name' in tag) return tag.name
+      // Fallback: try to convert to string
+      return String(tag)
+    }).filter(Boolean)
+  }
+
   // Transform API response to Deal interface
   private transformDeal(apiDeal: any): Deal {
     // Handle date parsing - expected_close_date might be just a date string (YYYY-MM-DD)
@@ -291,7 +304,7 @@ export class DealsStore extends BaseStore {
       createdDate,
       lastActivity,
       description: apiDeal.description || '',
-      tags: Array.isArray(apiDeal.tags) ? apiDeal.tags : [],
+      tags: this.extractTagNames(apiDeal.tags),
       activities: Array.isArray(apiDeal.activities)
         ? apiDeal.activities.map((activity: any) => ({
             id: activity.id,

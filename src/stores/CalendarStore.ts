@@ -275,18 +275,37 @@ export class CalendarStore extends BaseStore {
     this.selectedEvent = event
   }
 
+  // Helper function to extract tag names from tag objects or strings
+  private extractTagNames(tags: any[]): string[] {
+    if (!Array.isArray(tags)) return []
+    return tags.map(tag => {
+      // If tag is already a string, return it
+      if (typeof tag === 'string') return tag
+      // If tag is an object, extract the name property
+      if (tag && typeof tag === 'object' && 'name' in tag) return tag.name
+      // Fallback: try to convert to string
+      return String(tag)
+    }).filter(Boolean)
+  }
+
+  // Transform API response to CalendarEvent interface
+  private transformEvent(apiEvent: any): CalendarEvent {
+    return {
+      ...apiEvent,
+      startTime: new Date(apiEvent.startTime),
+      endTime: new Date(apiEvent.endTime),
+      tags: this.extractTagNames(apiEvent.tags),
+    }
+  }
+
   async fetchEvents() {
     return this.executeAsync(
       async () => {
         const events = await calendarApi.getEvents({
           filter: this.filterBy,
         })
-        // Convert date strings to Date objects
-        return events.map(event => ({
-          ...event,
-          startTime: new Date(event.startTime),
-          endTime: new Date(event.endTime),
-        }))
+        // Transform events including tag extraction
+        return events.map(event => this.transformEvent(event))
       },
       {
         onSuccess: (events) => {
@@ -300,12 +319,8 @@ export class CalendarStore extends BaseStore {
     return this.executeAsync(
       async () => {
         const event = await calendarApi.getEvent(id)
-        // Convert date strings to Date objects
-        return {
-          ...event,
-          startTime: new Date(event.startTime),
-          endTime: new Date(event.endTime),
-        }
+        // Transform event including tag extraction
+        return this.transformEvent(event)
       },
       {
         onSuccess: (event) => {
@@ -338,12 +353,8 @@ export class CalendarStore extends BaseStore {
     return this.executeAsync(
       async () => {
         const event = await calendarApi.createEvent(eventData)
-        // Convert date strings to Date objects
-        return {
-          ...event,
-          startTime: new Date(event.startTime),
-          endTime: new Date(event.endTime),
-        }
+        // Transform event including tag extraction
+        return this.transformEvent(event)
       },
       {
         onSuccess: (event) => {
@@ -357,12 +368,8 @@ export class CalendarStore extends BaseStore {
     return this.executeAsync(
       async () => {
         const event = await calendarApi.updateEvent(eventId, updates)
-        // Convert date strings to Date objects
-        return {
-          ...event,
-          startTime: new Date(event.startTime),
-          endTime: new Date(event.endTime),
-        }
+        // Transform event including tag extraction
+        return this.transformEvent(event)
       },
       {
         onSuccess: (event) => {
@@ -398,12 +405,8 @@ export class CalendarStore extends BaseStore {
     return this.executeAsync(
       async () => {
         const event = await calendarApi.updateEventStatus(calendarId, status)
-        // Convert date strings to Date objects
-        return {
-          ...event,
-          startTime: new Date(event.startTime),
-          endTime: new Date(event.endTime),
-        }
+        // Transform event including tag extraction
+        return this.transformEvent(event)
       },
       {
         onSuccess: (event) => {
@@ -423,12 +426,8 @@ export class CalendarStore extends BaseStore {
     return this.executeAsync(
       async () => {
         const event = await calendarApi.addOutcome(calendarId, outcome)
-        // Convert date strings to Date objects
-        return {
-          ...event,
-          startTime: new Date(event.startTime),
-          endTime: new Date(event.endTime),
-        }
+        // Transform event including tag extraction
+        return this.transformEvent(event)
       },
       {
         onSuccess: (event) => {

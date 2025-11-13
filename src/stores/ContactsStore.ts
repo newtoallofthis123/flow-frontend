@@ -164,6 +164,19 @@ export class ContactsStore extends BaseStore {
     return this.stats
   }
 
+  // Helper function to extract tag names from tag objects or strings
+  private extractTagNames(tags: any[]): string[] {
+    if (!Array.isArray(tags)) return []
+    return tags.map(tag => {
+      // If tag is already a string, return it
+      if (typeof tag === 'string') return tag
+      // If tag is an object, extract the name property
+      if (tag && typeof tag === 'object' && 'name' in tag) return tag.name
+      // Fallback: try to convert to string
+      return String(tag)
+    }).filter(Boolean)
+  }
+
   // Transform API response to Contact interface
   private transformContact(apiContact: any): Contact {
     return {
@@ -182,7 +195,7 @@ export class ContactsStore extends BaseStore {
       churnRisk: apiContact.churn_risk || 0,
       totalDeals: apiContact.total_deals_count || 0,
       totalValue: parseFloat(apiContact.total_deals_value || '0'),
-      tags: Array.isArray(apiContact.tags) ? apiContact.tags : [],
+      tags: this.extractTagNames(apiContact.tags),
       notes: apiContact.notes 
         ? (Array.isArray(apiContact.notes) ? apiContact.notes : [apiContact.notes])
         : [],

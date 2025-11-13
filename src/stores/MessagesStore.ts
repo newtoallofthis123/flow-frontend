@@ -257,6 +257,19 @@ export class MessagesStore extends BaseStore {
     }
   }
 
+  // Helper function to extract tag names from tag objects or strings
+  private extractTagNames(tags: any[]): string[] {
+    if (!Array.isArray(tags)) return []
+    return tags.map(tag => {
+      // If tag is already a string, return it
+      if (typeof tag === 'string') return tag
+      // If tag is an object, extract the name property
+      if (tag && typeof tag === 'object' && 'name' in tag) return tag.name
+      // Fallback: try to convert to string
+      return String(tag)
+    }).filter(Boolean)
+  }
+
   // Transform API response to Conversation interface
   private transformConversation(apiConv: any): Conversation {
     const parseDate = (dateStr: string | null | undefined, fallback?: Date): Date => {
@@ -293,7 +306,7 @@ export class MessagesStore extends BaseStore {
       overallSentiment: apiConv.overall_sentiment || apiConv.overallSentiment || 'neutral',
       sentimentTrend: apiConv.sentiment_trend || apiConv.sentimentTrend || 'stable',
       aiSummary: apiConv.ai_summary || apiConv.aiSummary || '',
-      tags: Array.isArray(apiConv.tags) ? apiConv.tags : [],
+      tags: this.extractTagNames(apiConv.tags),
       priority: apiConv.priority || 'medium',
       archived: apiConv.archived || false,
     }
@@ -405,15 +418,8 @@ export class MessagesStore extends BaseStore {
     return this.executeAsync(
       async () => {
         const conversation = await messagesApi.updatePriority(conversationId, priority)
-        // Convert date strings to Date objects
-        return {
-          ...conversation,
-          lastMessage: new Date(conversation.lastMessage),
-          messages: conversation.messages.map(msg => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp),
-          })),
-        }
+        // Transform conversation including tag extraction
+        return this.transformConversation(conversation)
       },
       {
         onSuccess: (conversation) => {
@@ -433,15 +439,8 @@ export class MessagesStore extends BaseStore {
     return this.executeAsync(
       async () => {
         const conversation = await messagesApi.archiveConversation(conversationId, archived)
-        // Convert date strings to Date objects
-        return {
-          ...conversation,
-          lastMessage: new Date(conversation.lastMessage),
-          messages: conversation.messages.map(msg => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp),
-          })),
-        }
+        // Transform conversation including tag extraction
+        return this.transformConversation(conversation)
       },
       {
         onSuccess: (conversation) => {
@@ -461,15 +460,8 @@ export class MessagesStore extends BaseStore {
     return this.executeAsync(
       async () => {
         const conversation = await messagesApi.addTag(conversationId, tag)
-        // Convert date strings to Date objects
-        return {
-          ...conversation,
-          lastMessage: new Date(conversation.lastMessage),
-          messages: conversation.messages.map(msg => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp),
-          })),
-        }
+        // Transform conversation including tag extraction
+        return this.transformConversation(conversation)
       },
       {
         onSuccess: (conversation) => {
