@@ -75,6 +75,11 @@ export class UserStore extends BaseStore {
     )
   }
 
+  async checkAuth() {
+    // Alias for fetchCurrentUser for consistency
+    return this.fetchCurrentUser()
+  }
+
   async fetchCurrentUser() {
     return this.executeAsync(
       async () => {

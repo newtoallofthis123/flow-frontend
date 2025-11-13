@@ -1,5 +1,5 @@
 import { useState, FormEvent, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
 import { useStore } from '../stores'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
@@ -9,21 +9,26 @@ import { LogIn, Mail, Lock } from 'lucide-react'
 const Login = observer(() => {
   const { userStore } = useStore()
   const navigate = useNavigate()
+  const location = useLocation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
   useEffect(() => {
     // Redirect if already authenticated
+    // Preserve the original route if available (from ProtectedRoute redirect)
     if (userStore.isAuthenticated) {
-      navigate('/dashboard', { replace: true })
+      const from = (location.state as { from?: { pathname?: string } })?.from?.pathname || '/dashboard'
+      navigate(from, { replace: true })
     }
-  }, [userStore.isAuthenticated, navigate])
+  }, [userStore.isAuthenticated, navigate, location.state])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     const result = await userStore.login(email, password)
     if (result && userStore.isAuthenticated) {
-      navigate('/dashboard', { replace: true })
+      // Preserve the original route if available
+      const from = (location.state as { from?: { pathname?: string } })?.from?.pathname || '/dashboard'
+      navigate(from, { replace: true })
     }
   }
 

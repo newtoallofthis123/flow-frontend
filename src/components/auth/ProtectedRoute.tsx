@@ -14,13 +14,14 @@ const ProtectedRoute = observer(({ children }: ProtectedRouteProps) => {
 
   useEffect(() => {
     // If not authenticated and we have a token, try to fetch current user
-    if (!userStore.isAuthenticated && userStore.token) {
+    if (!userStore.isAuthenticated && userStore.token && !userStore.isLoading) {
       userStore.fetchCurrentUser()
     }
   }, [userStore])
 
-  // Show loading while checking authentication
-  if (userStore.isLoading && !userStore.isAuthenticated && userStore.token) {
+  // Show loading while checking authentication (if we have a token)
+  // This prevents redirecting to login before auth check completes
+  if (userStore.token && !userStore.isAuthenticated && userStore.isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <LoadingSpinner size="lg" />
@@ -28,8 +29,8 @@ const ProtectedRoute = observer(({ children }: ProtectedRouteProps) => {
     )
   }
 
-  // Redirect to login if not authenticated
-  if (!userStore.isAuthenticated) {
+  // Redirect to login if not authenticated (after auth check is complete or no token)
+  if (!userStore.isAuthenticated && (!userStore.token || (!userStore.isLoading && userStore.token))) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 

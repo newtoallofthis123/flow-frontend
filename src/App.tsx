@@ -30,11 +30,20 @@ const RouteSync = ({ children }: { children: React.ReactNode }) => {
 }
 
 const RootRedirect = () => {
+  const location = useLocation()
   const token = localStorage.getItem('auth_token')
-  if (token) {
-    return <Navigate to="/dashboard" replace />
+  
+  // Only redirect if we're actually on the root path
+  // This preserves the current route on page refresh
+  if (location.pathname === '/') {
+    if (token) {
+      return <Navigate to="/dashboard" replace />
+    }
+    return <Navigate to="/login" replace />
   }
-  return <Navigate to="/login" replace />
+  
+  // If we're not on root, don't redirect (shouldn't happen, but safe guard)
+  return null
 }
 
 const router = createBrowserRouter([
