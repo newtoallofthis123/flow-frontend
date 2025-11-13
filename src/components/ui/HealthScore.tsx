@@ -18,10 +18,10 @@ const HealthScore = ({
   variant = 'circular'
 }: HealthScoreProps) => {
   const getScoreColor = () => {
-    if (score >= 80) return 'text-green-400'
-    if (score >= 60) return 'text-blue-400'
-    if (score >= 40) return 'text-yellow-400'
-    return 'text-red-400'
+    if (score >= 80) return 'text-green-600 dark:text-green-400'
+    if (score >= 60) return 'text-blue-600 dark:text-blue-400'
+    if (score >= 40) return 'text-yellow-600 dark:text-yellow-400'
+    return 'text-red-600 dark:text-red-400'
   }
 
   const getScoreBgColor = () => {
@@ -46,12 +46,12 @@ const HealthScore = ({
   const getTrendColor = () => {
     switch (trend) {
       case 'up':
-        return 'text-green-400'
+        return 'text-green-600 dark:text-green-400'
       case 'down':
-        return 'text-red-400'
+        return 'text-red-600 dark:text-red-400'
       case 'stable':
       default:
-        return 'text-slate-400'
+        return 'text-slate-500 dark:text-slate-400'
     }
   }
 
@@ -144,7 +144,7 @@ const HealthScore = ({
           fill="none"
           stroke="currentColor"
           strokeWidth="3"
-          className="text-muted"
+          className="text-muted/50 dark:text-muted"
         />
         {/* Progress circle */}
         <circle

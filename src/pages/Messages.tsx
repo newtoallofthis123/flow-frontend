@@ -66,21 +66,21 @@ const Messages = observer(() => {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high':
-        return 'border-l-red-400'
+        return 'border-l-red-600 dark:border-l-red-400'
       case 'medium':
-        return 'border-l-yellow-400'
+        return 'border-l-yellow-600 dark:border-l-yellow-400'
       case 'low':
       default:
-        return 'border-l-blue-400'
+        return 'border-l-blue-600 dark:border-l-blue-400'
     }
   }
 
   const getSentimentTrendIcon = (trend: string) => {
     switch (trend) {
       case 'improving':
-        return <TrendingUp className="w-3 h-3 text-green-400" />
+        return <TrendingUp className="w-3 h-3 text-green-600 dark:text-green-400" />
       case 'declining':
-        return <TrendingDown className="w-3 h-3 text-red-400" />
+        return <TrendingDown className="w-3 h-3 text-red-600 dark:text-red-400" />
       case 'stable':
       default:
         return <Minus className="w-3 h-3 text-muted-foreground" />
@@ -120,16 +120,16 @@ const Messages = observer(() => {
           <div className="p-4 border-b border-border bg-card/30">
             <h3 className="text-sm font-semibold text-foreground mb-3">Overall Sentiment</h3>
             <div className="grid grid-cols-3 gap-2">
-              <div className="bg-green-900/20 border border-green-700/30 rounded p-2 text-center">
-                <div className="text-green-400 font-bold">{Math.round(messagesStore.sentimentOverview.positive)}%</div>
+              <div className="bg-green-100 dark:bg-green-900/20 border border-green-300 dark:border-green-700/30 rounded p-2 text-center">
+                <div className="text-green-600 dark:text-green-400 font-bold">{Math.round(messagesStore.sentimentOverview.positive)}%</div>
                 <div className="text-xs text-muted-foreground">Positive</div>
               </div>
-              <div className="bg-yellow-900/20 border border-yellow-700/30 rounded p-2 text-center">
-                <div className="text-yellow-400 font-bold">{Math.round(messagesStore.sentimentOverview.neutral)}%</div>
+              <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700/30 rounded p-2 text-center">
+                <div className="text-yellow-600 dark:text-yellow-400 font-bold">{Math.round(messagesStore.sentimentOverview.neutral)}%</div>
                 <div className="text-xs text-muted-foreground">Neutral</div>
               </div>
-              <div className="bg-red-900/20 border border-red-700/30 rounded p-2 text-center">
-                <div className="text-red-400 font-bold">{Math.round(messagesStore.sentimentOverview.negative)}%</div>
+              <div className="bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-700/30 rounded p-2 text-center">
+                <div className="text-red-600 dark:text-red-400 font-bold">{Math.round(messagesStore.sentimentOverview.negative)}%</div>
                 <div className="text-xs text-muted-foreground">Negative</div>
               </div>
             </div>
@@ -145,7 +145,7 @@ const Messages = observer(() => {
                   className={`p-4 rounded-lg border-l-4 cursor-pointer transition-all ${getPriorityColor(conversation.priority)} ${
                     id === conversation.id
                       ? 'bg-accent border-primary border border-l-4'
-                      : 'bg-card border-border hover:bg-accent/50 border border-l-4'
+                      : 'bg-card border-border hover:bg-accent dark:hover:bg-accent/50 border border-l-4'
                   }`}
                 >
                   {/* Conversation Header */}

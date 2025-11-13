@@ -109,7 +109,7 @@ const Contacts = observer(() => {
                   className={`p-4 rounded-lg border cursor-pointer transition-all ${
                     id === contact.id
                       ? 'bg-accent border-primary'
-                      : 'bg-card border-border hover:bg-accent/50'
+                      : 'bg-card border-border hover:bg-accent dark:hover:bg-accent/50'
                   }`}
                 >
                   {/* Contact Header */}
