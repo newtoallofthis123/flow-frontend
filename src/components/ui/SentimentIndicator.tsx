@@ -22,7 +22,6 @@ const SentimentIndicator = ({
       case 'positive':
         return {
           icon: Smile,
-          emoji: '😊',
           color: 'text-green-400',
           bgColor: 'bg-green-900/20',
           borderColor: 'border-green-700/30',
@@ -31,7 +30,6 @@ const SentimentIndicator = ({
       case 'negative':
         return {
           icon: Frown,
-          emoji: '😟',
           color: 'text-red-400',
           bgColor: 'bg-red-900/20',
           borderColor: 'border-red-700/30',
@@ -41,7 +39,6 @@ const SentimentIndicator = ({
       default:
         return {
           icon: Meh,
-          emoji: '😐',
           color: 'text-yellow-400',
           bgColor: 'bg-yellow-900/20',
           borderColor: 'border-yellow-700/30',
@@ -83,9 +80,9 @@ const SentimentIndicator = ({
 
   if (variant === 'minimal') {
     return (
-      <span className={`${sizeClasses.text}`} title={`${config.label} sentiment`}>
-        {config.emoji}
-      </span>
+      <div className={`${sizeClasses.container} ${config.bgColor} ${config.borderColor} rounded-full border flex items-center justify-center backdrop-blur-sm`} title={`${config.label} sentiment`}>
+        <Icon className={`${sizeClasses.icon} ${config.color}`} />
+      </div>
     )
   }
 

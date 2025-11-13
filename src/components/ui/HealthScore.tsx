@@ -173,22 +173,6 @@ const HealthScore = ({
           {score}
         </span>
       </div>
-
-      {/* Trend indicator */}
-      {showTrend && (
-        <div className="absolute -bottom-1 -right-1">
-          <div className={`${getScoreBgColor()} rounded-full p-1 border backdrop-blur-sm`}>
-            <TrendIcon className={`w-3 h-3 ${getTrendColor()}`} />
-          </div>
-        </div>
-      )}
-
-      {/* Label */}
-      {showLabel && (
-        <div className="absolute -bottom-6 text-center">
-          <span className="text-muted-foreground text-xs font-medium">Health Score</span>
-        </div>
-      )}
     </div>
   )
 }

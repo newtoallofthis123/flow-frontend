@@ -3,7 +3,7 @@ import { useStore } from '../stores'
 import MainLayout from '../components/layout/MainLayout'
 import SearchBar from '../components/ui/SearchBar'
 import SentimentIndicator from '../components/ui/SentimentIndicator'
-import { MessageSquare, Send, Phone, Mail, Calendar, Building, User, Brain, Lightbulb, Zap, Clock, Paperclip, Smile } from 'lucide-react'
+import { MessageSquare, Send, Phone, Mail, Calendar, Building, User, Brain, Lightbulb, Zap, Clock, Paperclip, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
 
 const Messages = observer(() => {
@@ -78,12 +78,12 @@ const Messages = observer(() => {
   const getSentimentTrendIcon = (trend: string) => {
     switch (trend) {
       case 'improving':
-        return '📈'
+        return <TrendingUp className="w-3 h-3 text-green-400" />
       case 'declining':
-        return '📉'
+        return <TrendingDown className="w-3 h-3 text-red-400" />
       case 'stable':
       default:
-        return '➡️'
+        return <Minus className="w-3 h-3 text-muted-foreground" />
     }
   }
 
@@ -174,9 +174,9 @@ const Messages = observer(() => {
                         size="sm"
                         variant="minimal"
                       />
-                      <span className="text-xs text-muted-foreground">
+                      <div className="flex items-center">
                         {getSentimentTrendIcon(conversation.sentimentTrend)}
-                      </span>
+                      </div>
                       <span className="text-xs text-muted-foreground">{formatDate(conversation.lastMessage)}</span>
                     </div>
                   </div>
@@ -213,40 +213,39 @@ const Messages = observer(() => {
             <>
               {/* Conversation Header */}
               <div className="p-6 border-b border-border bg-card/30">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
-                      <span className="text-primary-foreground font-bold">
+                <div className="flex items-start justify-between gap-6">
+                  <div className="flex items-center gap-4 min-w-0 flex-1">
+                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <span className="text-primary-foreground font-bold text-lg">
                         {(selectedConversation.contactName || getContactInfo(selectedConversation.contactId).name).charAt(0).toUpperCase()}
                       </span>
                     </div>
-                    <div>
-                      <h2 className="text-xl font-bold text-foreground">
+                    <div className="min-w-0 flex-1">
+                      <h2 className="text-xl font-semibold text-foreground mb-1 truncate">
                         {selectedConversation.contactName || getContactInfo(selectedConversation.contactId).name}
                       </h2>
-                      <div className="flex items-center space-x-1 text-muted-foreground">
-                        <Building className="w-4 h-4" />
-                        <span>{selectedConversation.contactCompany || getContactInfo(selectedConversation.contactId).company}</span>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Building className="w-4 h-4 flex-shrink-0" />
+                        <span className="truncate">{selectedConversation.contactCompany || getContactInfo(selectedConversation.contactId).company}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <SentimentIndicator
-                        sentiment={selectedConversation.overallSentiment}
-                        showLabel={true}
-                        variant="detailed"
-                      />
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <button className="p-2 bg-secondary hover:bg-secondary/80 rounded-lg text-secondary-foreground transition-colors">
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <SentimentIndicator
+                      sentiment={selectedConversation.overallSentiment}
+                      size="sm"
+                      variant="minimal"
+                    />
+                    <div className="h-6 w-px bg-border" />
+                    <div className="flex items-center gap-1">
+                      <button className="p-2.5 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-colors">
                         <Phone className="w-4 h-4" />
                       </button>
-                      <button className="p-2 bg-secondary hover:bg-secondary/80 rounded-lg text-secondary-foreground transition-colors">
+                      <button className="p-2.5 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-colors">
                         <Mail className="w-4 h-4" />
                       </button>
-                      <button className="p-2 bg-secondary hover:bg-secondary/80 rounded-lg text-secondary-foreground transition-colors">
+                      <button className="p-2.5 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-colors">
                         <Calendar className="w-4 h-4" />
                       </button>
                     </div>
@@ -429,7 +428,7 @@ const Messages = observer(() => {
                 )}
 
                 {/* Compose Box */}
-                <div className="flex space-x-4">
+                <div className="flex items-end space-x-4">
                   <div className="flex-1">
                     <div className="relative">
                       <textarea
@@ -448,16 +447,14 @@ const Messages = observer(() => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex flex-col justify-end">
-                    <button
-                      onClick={handleSendMessage}
-                      disabled={!messagesStore.composingMessage.trim()}
-                      className="px-6 py-3 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground rounded-lg text-primary-foreground font-medium transition-colors flex items-center space-x-2"
-                    >
-                      <Send className="w-4 h-4" />
-                      <span>Send</span>
-                    </button>
-                  </div>
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={!messagesStore.composingMessage.trim()}
+                    className="px-6 py-3 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground rounded-lg text-primary-foreground font-medium transition-colors flex items-center space-x-2"
+                  >
+                    <Send className="w-4 h-4" />
+                    <span>Send</span>
+                  </button>
                 </div>
               </div>
             </>

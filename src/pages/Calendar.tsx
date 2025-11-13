@@ -3,7 +3,7 @@ import { useStore } from '../stores'
 import MainLayout from '../components/layout/MainLayout'
 import SearchBar from '../components/ui/SearchBar'
 import AIInsight from '../components/ui/AIInsight'
-import { Calendar as CalendarIcon, Clock, Video, MapPin, Users, Building, Target, Brain, Plus } from 'lucide-react'
+import { Calendar as CalendarIcon, Clock, Video, MapPin, Users, Building, Target, Brain, Plus, AlertTriangle } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { CalendarEvent } from '../stores/CalendarStore'
 
@@ -512,7 +512,10 @@ const Calendar = observer(() => {
                         <h4 className="font-semibold text-red-400 mb-3">Competitor Intelligence</h4>
                         <div className="space-y-2">
                           {selectedEvent.preparation.competitorIntel.map((intel, index) => (
-                            <p key={index} className="text-sm text-red-300">⚠️ {intel}</p>
+                            <div key={index} className="flex items-start gap-2">
+                              <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                              <p className="text-sm text-red-300">{intel}</p>
+                            </div>
                           ))}
                         </div>
                       </div>
