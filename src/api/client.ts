@@ -21,6 +21,7 @@ class ApiClient {
   private token: string | null = null
   private refreshPromise: Promise<string | null> | null = null
   private onLogout?: () => void
+  private isLoggingOut = false
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl
@@ -35,6 +36,7 @@ class ApiClient {
     this.token = token
     if (token) {
       localStorage.setItem('auth_token', token)
+      this.isLoggingOut = false // Reset logout flag when setting a new token
     } else {
       localStorage.removeItem('auth_token')
     }
@@ -64,7 +66,11 @@ class ApiClient {
 
     const refreshToken = localStorage.getItem('refresh_token')
     if (!refreshToken) {
-      this.onLogout?.()
+      // Only trigger logout if not already logging out and we have a token
+      if (!this.isLoggingOut && this.token) {
+        this.isLoggingOut = true
+        this.onLogout?.()
+      }
       return null
     }
 
@@ -92,7 +98,11 @@ class ApiClient {
         // Refresh failed, logout user
         this.setToken(null)
         localStorage.removeItem('refresh_token')
-        this.onLogout?.()
+        // Only trigger logout if not already logging out
+        if (!this.isLoggingOut) {
+          this.isLoggingOut = true
+          this.onLogout?.()
+        }
         return null
       } finally {
         this.refreshPromise = null
@@ -102,15 +112,18 @@ class ApiClient {
     return this.refreshPromise
   }
 
-  private async handleResponse<T>(response: Response, originalRequest?: () => Promise<Response>, skip401Retry = false): Promise<T> {
+  private async handleResponse<T>(response: Response, originalRequest?: () => Promise<Response>, skip401Retry = false, endpoint?: string): Promise<T> {
     if (!response.ok) {
+      // Skip 401 retry for logout endpoint to prevent infinite loops
+      const isLogoutEndpoint = endpoint?.includes('/api/auth/logout')
+      
       // Handle 401 Unauthorized - try to refresh token
-      if (response.status === 401 && originalRequest && !skip401Retry) {
+      if (response.status === 401 && originalRequest && !skip401Retry && !isLogoutEndpoint) {
         const newToken = await this.refreshToken()
         if (newToken) {
           // Retry original request with new token
           const retryResponse = await originalRequest()
-          return this.handleResponse<T>(retryResponse, originalRequest, true)
+          return this.handleResponse<T>(retryResponse, originalRequest, true, endpoint)
         }
         // Refresh failed, logout will be handled by refreshToken
       }
@@ -146,7 +159,7 @@ class ApiClient {
     })
 
     const response = await makeRequest()
-    return this.handleResponse<T>(response, makeRequest)
+    return this.handleResponse<T>(response, makeRequest, false, endpoint)
   }
 
   async post<T>(endpoint: string, data?: any): Promise<T> {
@@ -157,7 +170,7 @@ class ApiClient {
     })
 
     const response = await makeRequest()
-    return this.handleResponse<T>(response, makeRequest)
+    return this.handleResponse<T>(response, makeRequest, false, endpoint)
   }
 
   async put<T>(endpoint: string, data?: any): Promise<T> {
@@ -168,7 +181,7 @@ class ApiClient {
     })
 
     const response = await makeRequest()
-    return this.handleResponse<T>(response, makeRequest)
+    return this.handleResponse<T>(response, makeRequest, false, endpoint)
   }
 
   async patch<T>(endpoint: string, data?: any): Promise<T> {
@@ -179,7 +192,7 @@ class ApiClient {
     })
 
     const response = await makeRequest()
-    return this.handleResponse<T>(response, makeRequest)
+    return this.handleResponse<T>(response, makeRequest, false, endpoint)
   }
 
   async delete<T>(endpoint: string): Promise<T> {
@@ -189,7 +202,7 @@ class ApiClient {
     })
 
     const response = await makeRequest()
-    return this.handleResponse<T>(response, makeRequest)
+    return this.handleResponse<T>(response, makeRequest, false, endpoint)
   }
 }
 

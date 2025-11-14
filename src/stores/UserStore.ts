@@ -8,6 +8,7 @@ export class UserStore extends BaseStore {
   user: User | null = null
   isAuthenticated = false
   token: string | null = null
+  private isLoggingOut = false
 
   constructor() {
     super()
@@ -57,22 +58,37 @@ export class UserStore extends BaseStore {
   }
 
   async logout() {
-    return this.executeAsync(
-      async () => {
-        await authApi.logout()
-      },
-      {
-        onSuccess: () => {
-          this.user = null
-          this.token = null
-          this.isAuthenticated = false
-          apiClient.setToken(null)
-          wsClient.disconnect()
-          localStorage.removeItem('auth_token')
-          localStorage.removeItem('refresh_token')
-        },
+    // Prevent concurrent logout calls
+    if (this.isLoggingOut) {
+      return Promise.resolve(null)
+    }
+
+    this.isLoggingOut = true
+
+    try {
+      // Clear auth state immediately to prevent any API calls from triggering refresh
+      const hadToken = !!this.token
+      this.user = null
+      this.token = null
+      this.isAuthenticated = false
+      apiClient.setToken(null)
+      wsClient.disconnect()
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('refresh_token')
+
+      // Only call logout API if we had a token (to notify server)
+      // If we didn't have a token, we're already logged out
+      if (hadToken) {
+        try {
+          await authApi.logout()
+        } catch (error) {
+          // Ignore errors from logout API call - we're already logged out locally
+          // This prevents 401 errors from triggering refresh loops
+        }
       }
-    )
+    } finally {
+      this.isLoggingOut = false
+    }
   }
 
   async checkAuth() {
