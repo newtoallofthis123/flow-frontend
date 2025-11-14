@@ -217,7 +217,7 @@ const Messages = observer(() => {
                   <div className="flex items-center gap-4 min-w-0 flex-1">
                     <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center flex-shrink-0">
                       <span className="text-primary-foreground font-bold text-lg">
-                        {(selectedConversation.contactName || getContactInfo(selectedConversation.contactId).name).charAt(0).toUpperCase()}
+                        {((selectedConversation.contactName || getContactInfo(selectedConversation.contactId).name) || '?').charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div className="min-w-0 flex-1">
@@ -263,7 +263,7 @@ const Messages = observer(() => {
                         {message.senderType === 'user' ? (
                           <User className="w-4 h-4 text-blue-400" />
                         ) : (
-                          <span className="text-card-foreground text-sm">{message.senderName.charAt(0)}</span>
+                          <span className="text-card-foreground text-sm">{(message.senderName || '?').charAt(0).toUpperCase()}</span>
                         )}
                       </div>
 

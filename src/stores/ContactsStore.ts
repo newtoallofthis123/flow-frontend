@@ -199,17 +199,23 @@ export class ContactsStore extends BaseStore {
       notes: apiContact.notes 
         ? (Array.isArray(apiContact.notes) ? apiContact.notes : [apiContact.notes])
         : [],
-      communicationHistory: Array.isArray(apiContact.communicationHistory) 
-        ? apiContact.communicationHistory.map((event: any) => ({
-            id: event.id,
-            type: event.type,
-            date: new Date(event.date),
-            subject: event.subject,
-            summary: event.summary,
-            sentiment: event.sentiment || 'neutral',
-            aiAnalysis: event.aiAnalysis || event.ai_analysis,
-          }))
-        : [],
+      communicationHistory: (() => {
+        // Handle both camelCase and snake_case field names
+        const events = apiContact.communicationHistory || apiContact.communication_events || []
+        if (!Array.isArray(events)) return []
+        
+        return events.map((event: any) => ({
+          id: event.id,
+          type: event.type,
+          // Handle both date formats: 'date' or 'occurred_at'
+          date: new Date(event.date || event.occurred_at || Date.now()),
+          subject: event.subject,
+          summary: event.summary,
+          sentiment: event.sentiment || 'neutral',
+          // Handle both camelCase and snake_case for ai_analysis
+          aiAnalysis: event.aiAnalysis || event.ai_analysis,
+        }))
+      })(),
       aiInsights: Array.isArray(apiContact.aiInsights)
         ? apiContact.aiInsights.map((insight: any) => ({
             id: insight.id,

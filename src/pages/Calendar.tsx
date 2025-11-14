@@ -1,4 +1,5 @@
 import { observer } from 'mobx-react-lite'
+import { useEffect } from 'react'
 import { useStore } from '../stores'
 import MainLayout from '../components/layout/MainLayout'
 import SearchBar from '../components/ui/SearchBar'
@@ -8,13 +9,46 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { CalendarEvent } from '../stores/CalendarStore'
 
 const Calendar = observer(() => {
-  const { calendarStore } = useStore()
+  const { calendarStore, contactsStore } = useStore()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
 
+  // Initialize contacts store to resolve contact information
+  useEffect(() => {
+    if (contactsStore.contacts.length === 0) {
+      contactsStore.initialize()
+    }
+  }, [contactsStore])
+
+  // Fetch full event details when ID changes (includes preparation and AI insights)
+  useEffect(() => {
+    if (id) {
+      calendarStore.fetchEvent(id)
+      // Also fetch preparation if available
+      calendarStore.fetchPreparation(id).catch(() => {
+        // Preparation might not be available for all events, ignore errors
+      })
+    }
+  }, [id, calendarStore])
+
+  // Resolve contact information from contacts store if not in event
   const selectedEvent = id
-    ? calendarStore.events.find(e => e.id === id)
+    ? (calendarStore.events.find(e => e.id === id) || calendarStore.selectedEvent)
     : null
+
+  // Enhance event with contact information if contactId is present but name/company are missing
+  const enhancedEvent = selectedEvent && selectedEvent.contactId && !selectedEvent.contactName
+    ? (() => {
+        const contact = contactsStore.contacts.find(c => c.id === selectedEvent.contactId)
+        return contact
+          ? {
+              ...selectedEvent,
+              contactName: contact.name,
+              contactCompany: contact.company,
+            }
+          : selectedEvent
+      })()
+    : selectedEvent
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-US', {
@@ -289,58 +323,58 @@ const Calendar = observer(() => {
 
         {/* Right Panel - Event Detail */}
         <div className="flex-1 flex flex-col">
-          {selectedEvent ? (
+          {enhancedEvent ? (
             <>
               {/* Event Header */}
               <div className="p-6 border-b border-border bg-card/30">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
-                      <div className={`p-3 rounded-lg ${getEventTypeColor(selectedEvent.type)}`}>
+                      <div className={`p-3 rounded-lg ${getEventTypeColor(enhancedEvent.type)}`}>
                         {(() => {
-                          const Icon = getEventTypeIcon(selectedEvent.type)
+                          const Icon = getEventTypeIcon(enhancedEvent.type)
                           return <Icon className="w-6 h-6" />
                         })()}
                       </div>
                       <div>
-                        <h2 className="text-2xl font-bold text-foreground">{selectedEvent.title}</h2>
+                        <h2 className="text-2xl font-bold text-foreground">{enhancedEvent.title}</h2>
                         <div className="flex items-center space-x-4 text-muted-foreground">
                           <div className="flex items-center space-x-1">
                             <Clock className="w-4 h-4" />
-                            <span>{formatTime(selectedEvent.startTime)} - {formatTime(selectedEvent.endTime)}</span>
+                            <span>{formatTime(enhancedEvent.startTime)} - {formatTime(enhancedEvent.endTime)}</span>
                           </div>
                           <div className="flex items-center space-x-1">
                             <CalendarIcon className="w-4 h-4" />
-                            <span>{formatDate(selectedEvent.startTime)}</span>
+                            <span>{formatDate(enhancedEvent.startTime)}</span>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {selectedEvent.description && (
-                      <p className="text-muted-foreground mb-4">{selectedEvent.description}</p>
+                    {enhancedEvent.description && (
+                      <p className="text-muted-foreground mb-4">{enhancedEvent.description}</p>
                     )}
 
                     <div className="flex items-center space-x-4">
-                      {selectedEvent.contactName && (
+                      {enhancedEvent.contactName && (
                         <div className="flex items-center space-x-2 text-muted-foreground">
                           <Users className="w-4 h-4" />
-                          <span>{selectedEvent.contactName}</span>
-                          {selectedEvent.contactCompany && (
+                          <span>{enhancedEvent.contactName}</span>
+                          {enhancedEvent.contactCompany && (
                             <>
                               <span>•</span>
-                              <span>{selectedEvent.contactCompany}</span>
+                              <span>{enhancedEvent.contactCompany}</span>
                             </>
                           )}
                         </div>
                       )}
 
-                      {(selectedEvent.location || selectedEvent.meetingLink) && (
+                      {(enhancedEvent.location || enhancedEvent.meetingLink) && (
                         <div className="flex items-center space-x-2 text-muted-foreground">
-                          {selectedEvent.location ? (
+                          {enhancedEvent.location ? (
                             <>
                               <MapPin className="w-4 h-4" />
-                              <span>{selectedEvent.location}</span>
+                              <span>{enhancedEvent.location}</span>
                             </>
                           ) : (
                             <>
@@ -354,7 +388,7 @@ const Calendar = observer(() => {
                   </div>
 
                   <div className="flex items-center space-x-3">
-                    {selectedEvent.meetingLink && (
+                    {enhancedEvent.meetingLink && (
                       <button className="px-4 py-2 bg-primary hover:bg-primary/90 rounded-lg text-primary-foreground transition-colors">
                         Join Call
                       </button>
@@ -379,24 +413,26 @@ const Calendar = observer(() => {
                       </h3>
 
                       {/* Talking Points */}
-                      <div className="mb-6">
-                        <h4 className="font-semibold text-card-foreground mb-3">Suggested Talking Points</h4>
-                        <ul className="space-y-2">
-                          {selectedEvent.preparation.suggestedTalkingPoints.map((point, index) => (
-                            <li key={index} className="flex items-start space-x-2 text-card-foreground">
-                              <div className="w-2 h-2 bg-blue-400 rounded-full mt-2" />
-                              <span>{point}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+                      {enhancedEvent.preparation.suggestedTalkingPoints.length > 0 && (
+                        <div className="mb-6">
+                          <h4 className="font-semibold text-card-foreground mb-3">Suggested Talking Points</h4>
+                          <ul className="space-y-2">
+                            {enhancedEvent.preparation.suggestedTalkingPoints.map((point, index) => (
+                              <li key={index} className="flex items-start space-x-2 text-card-foreground">
+                                <div className="w-2 h-2 bg-blue-400 rounded-full mt-2" />
+                                <span>{point}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
 
                       {/* Recent Interactions */}
-                      {selectedEvent.preparation.recentInteractions.length > 0 && (
+                      {enhancedEvent.preparation.recentInteractions.length > 0 && (
                         <div className="mb-6">
                           <h4 className="font-semibold text-card-foreground mb-3">Recent Interactions</h4>
                           <div className="space-y-2">
-                            {selectedEvent.preparation.recentInteractions.map((interaction, index) => (
+                            {enhancedEvent.preparation.recentInteractions.map((interaction, index) => (
                               <div key={index} className="p-3 bg-accent/50 rounded-lg border border-border">
                                 <p className="text-sm text-card-foreground">{interaction}</p>
                               </div>
@@ -406,21 +442,21 @@ const Calendar = observer(() => {
                       )}
 
                       {/* Deal Context */}
-                      {selectedEvent.preparation.dealContext && (
+                      {enhancedEvent.preparation.dealContext && (
                         <div className="mb-6">
                           <h4 className="font-semibold text-card-foreground mb-3">Deal Context</h4>
                           <div className="p-3 bg-blue-900/20 border border-blue-700/30 rounded-lg">
-                            <p className="text-sm text-blue-300">{selectedEvent.preparation.dealContext}</p>
+                            <p className="text-sm text-blue-300">{enhancedEvent.preparation.dealContext}</p>
                           </div>
                         </div>
                       )}
 
                       {/* Documents to Share */}
-                      {selectedEvent.preparation.documentsToShare.length > 0 && (
+                      {enhancedEvent.preparation.documentsToShare.length > 0 && (
                         <div>
                           <h4 className="font-semibold text-card-foreground mb-3">Documents to Share</h4>
                           <div className="space-y-2">
-                            {selectedEvent.preparation.documentsToShare.map((doc, index) => (
+                            {enhancedEvent.preparation.documentsToShare.map((doc, index) => (
                               <div key={index} className="flex items-center space-x-2 p-2 bg-accent/30 rounded text-sm text-card-foreground border border-border">
                                 <div className="w-2 h-2 bg-green-400 rounded-full" />
                                 <span>{doc}</span>
@@ -432,11 +468,11 @@ const Calendar = observer(() => {
                     </div>
 
                     {/* Attendees */}
-                    {selectedEvent.attendees.length > 0 && (
+                    {enhancedEvent.attendees.length > 0 && (
                       <div className="bg-card rounded-lg p-6 border border-border">
                         <h3 className="text-lg font-semibold text-card-foreground mb-4">Attendees</h3>
                         <div className="space-y-3">
-                          {selectedEvent.attendees.map((attendee) => (
+                          {enhancedEvent.attendees.map((attendee) => (
                             <div key={attendee.id} className="flex items-center justify-between p-3 bg-accent/50 rounded-lg border border-border">
                               <div>
                                 <div className="font-medium text-card-foreground">{attendee.name}</div>
@@ -464,7 +500,8 @@ const Calendar = observer(() => {
                     <div>
                       <h3 className="text-lg font-semibold text-foreground mb-4">AI Insights</h3>
                       <div className="space-y-4">
-                        {selectedEvent.aiInsights.map((insight) => (
+                        {enhancedEvent.aiInsights.length > 0 ? (
+                          enhancedEvent.aiInsights.map((insight) => (
                           <AIInsight
                             key={insight.id}
                             type={insight.type === 'follow-up' ? 'suggestion' : insight.type as any}
@@ -476,7 +513,10 @@ const Calendar = observer(() => {
                             size="sm"
                             variant="card"
                           />
-                        ))}
+                        ))
+                        ) : (
+                          <p className="text-sm text-muted-foreground">No AI insights available</p>
+                        )}
                       </div>
                     </div>
 
@@ -484,22 +524,22 @@ const Calendar = observer(() => {
                     <div className="bg-card rounded-lg p-4 border border-border">
                       <h4 className="font-semibold text-card-foreground mb-3">Event Status</h4>
                       <div className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
-                        selectedEvent.status === 'confirmed' ? 'bg-green-900/20 text-green-400' :
-                        selectedEvent.status === 'scheduled' ? 'bg-blue-900/20 text-blue-400' :
-                        selectedEvent.status === 'completed' ? 'bg-muted text-muted-foreground' :
-                        selectedEvent.status === 'cancelled' ? 'bg-red-900/20 text-red-400' :
+                        enhancedEvent.status === 'confirmed' ? 'bg-green-900/20 text-green-400' :
+                        enhancedEvent.status === 'scheduled' ? 'bg-blue-900/20 text-blue-400' :
+                        enhancedEvent.status === 'completed' ? 'bg-muted text-muted-foreground' :
+                        enhancedEvent.status === 'cancelled' ? 'bg-red-900/20 text-red-400' :
                         'bg-yellow-900/20 text-yellow-400'
                       }`}>
-                        {selectedEvent.status.charAt(0).toUpperCase() + selectedEvent.status.slice(1)}
+                        {enhancedEvent.status.charAt(0).toUpperCase() + enhancedEvent.status.slice(1)}
                       </div>
                     </div>
 
                     {/* Personal Notes */}
-                    {selectedEvent.preparation.personalNotes.length > 0 && (
+                    {enhancedEvent.preparation.personalNotes.length > 0 && (
                       <div className="bg-card rounded-lg p-4 border border-border">
                         <h4 className="font-semibold text-card-foreground mb-3">Personal Notes</h4>
                         <div className="space-y-2">
-                          {selectedEvent.preparation.personalNotes.map((note, index) => (
+                          {enhancedEvent.preparation.personalNotes.map((note, index) => (
                             <p key={index} className="text-sm text-muted-foreground">• {note}</p>
                           ))}
                         </div>
@@ -507,11 +547,11 @@ const Calendar = observer(() => {
                     )}
 
                     {/* Competitor Intel */}
-                    {selectedEvent.preparation.competitorIntel && selectedEvent.preparation.competitorIntel.length > 0 && (
+                    {enhancedEvent.preparation.competitorIntel && enhancedEvent.preparation.competitorIntel.length > 0 && (
                       <div className="bg-red-900/10 border border-red-700/30 rounded-lg p-4">
                         <h4 className="font-semibold text-red-400 mb-3">Competitor Intelligence</h4>
                         <div className="space-y-2">
-                          {selectedEvent.preparation.competitorIntel.map((intel, index) => (
+                          {enhancedEvent.preparation.competitorIntel.map((intel, index) => (
                             <div key={index} className="flex items-start gap-2">
                               <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
                               <p className="text-sm text-red-300">{intel}</p>

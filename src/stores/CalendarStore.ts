@@ -291,10 +291,35 @@ export class CalendarStore extends BaseStore {
   // Transform API response to CalendarEvent interface
   private transformEvent(apiEvent: any): CalendarEvent {
     return {
-      ...apiEvent,
-      startTime: new Date(apiEvent.startTime),
-      endTime: new Date(apiEvent.endTime),
-      tags: this.extractTagNames(apiEvent.tags),
+      id: apiEvent.id,
+      title: apiEvent.title,
+      description: apiEvent.description,
+      // Handle both camelCase and snake_case date fields
+      startTime: new Date(apiEvent.startTime || apiEvent.start_time || Date.now()),
+      endTime: new Date(apiEvent.endTime || apiEvent.end_time || Date.now()),
+      type: apiEvent.type || 'meeting',
+      // Handle contact information - check both formats
+      contactId: apiEvent.contactId || apiEvent.contact_id,
+      contactName: apiEvent.contactName || apiEvent.contact_name,
+      contactCompany: apiEvent.contactCompany || apiEvent.contact_company,
+      dealId: apiEvent.dealId || apiEvent.deal_id,
+      location: apiEvent.location || null,
+      // Handle meeting_link field
+      meetingLink: apiEvent.meetingLink || apiEvent.meeting_link || null,
+      // Extract tag names from tag objects or strings
+      tags: this.extractTagNames(apiEvent.tags || []),
+      status: apiEvent.status || 'scheduled',
+      priority: apiEvent.priority || 'medium',
+      // Provide defaults for fields that might not be in backend response
+      attendees: Array.isArray(apiEvent.attendees) ? apiEvent.attendees : [],
+      aiInsights: Array.isArray(apiEvent.aiInsights) ? apiEvent.aiInsights : [],
+      preparation: apiEvent.preparation || {
+        suggestedTalkingPoints: [],
+        recentInteractions: [],
+        personalNotes: [],
+        documentsToShare: [],
+      },
+      outcome: apiEvent.outcome,
     }
   }
 

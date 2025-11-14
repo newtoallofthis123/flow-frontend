@@ -1,4 +1,5 @@
 import { observer } from 'mobx-react-lite'
+import { useEffect } from 'react'
 import { useStore } from '../stores'
 import MainLayout from '../components/layout/MainLayout'
 import SearchBar from '../components/ui/SearchBar'
@@ -13,8 +14,15 @@ const Contacts = observer(() => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
 
+  // Fetch full contact details when ID changes (includes communication events)
+  useEffect(() => {
+    if (id) {
+      contactsStore.fetchContact(id)
+    }
+  }, [id, contactsStore])
+
   const selectedContact = id
-    ? contactsStore.contacts.find(c => c.id === id)
+    ? contactsStore.contacts.find(c => c.id === id) || contactsStore.selectedContact
     : null
 
   const formatCurrency = (amount: number) => {
@@ -237,7 +245,10 @@ const Contacts = observer(() => {
                       </h3>
 
                       <div className="space-y-4">
-                        {(selectedContact.communicationHistory || []).map((event) => (
+                        {(selectedContact.communicationHistory || [])
+                          .slice()
+                          .sort((a, b) => b.date.getTime() - a.date.getTime())
+                          .map((event) => (
                           <div key={event.id} className="flex space-x-4">
                             <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center flex-shrink-0">
                               {event.type === 'email' && <Mail className="w-5 h-5 text-blue-400" />}
