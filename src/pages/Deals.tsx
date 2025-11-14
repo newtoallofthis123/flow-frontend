@@ -5,6 +5,7 @@ import MainLayout from '../components/layout/MainLayout'
 import SearchBar from '../components/ui/SearchBar'
 import ProbabilityBadge from '../components/ui/ProbabilityBadge'
 import AIInsight from '../components/ui/AIInsight'
+import AddDealModal from '../components/ui/AddDealModal'
 import { Target, DollarSign, Calendar, Building, User, AlertTriangle, TrendingUp, Brain, Plus, MoreHorizontal, Users } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { DealStage, Deal } from '../stores/DealsStore'
@@ -16,6 +17,7 @@ const Deals = observer(() => {
   const [draggedDealId, setDraggedDealId] = useState<string | null>(null)
   const [dragOverStage, setDragOverStage] = useState<DealStage | null>(null)
   const dragStartPosRef = useRef<{ x: number; y: number } | null>(null)
+  const [isAddDealModalOpen, setIsAddDealModalOpen] = useState(false)
 
   const selectedDeal = id
     ? dealsStore.deals.find(d => d.id === id)
@@ -143,6 +145,47 @@ const Deals = observer(() => {
     } finally {
       setDragOverStage(null)
       setDraggedDealId(null)
+    }
+  }
+
+  const handleAddDeal = async (data: {
+    title: string
+    contactId: string
+    contactName: string
+    company: string
+    value: number
+    stage: DealStage
+    expectedCloseDate: Date
+    description: string
+    tags?: string[]
+    priority: 'high' | 'medium' | 'low'
+  }) => {
+    try {
+      const now = new Date()
+      const newDeal = await dealsStore.createDeal({
+        title: data.title,
+        contactId: data.contactId,
+        contactName: data.contactName,
+        company: data.company,
+        value: data.value,
+        stage: data.stage,
+        expectedCloseDate: data.expectedCloseDate,
+        createdDate: now,
+        lastActivity: now,
+        description: data.description || '',
+        tags: data.tags || [],
+        activities: [],
+        competitorMentioned: undefined,
+        priority: data.priority,
+      })
+      // Navigate to the new deal
+      navigate(`/deals/${newDeal.id}`)
+      // Refresh stats
+      await dealsStore.fetchStageStats()
+      await dealsStore.fetchForecast()
+    } catch (error) {
+      console.error('Error adding deal:', error)
+      throw error
     }
   }
 
@@ -339,6 +382,14 @@ const Deals = observer(() => {
             </div>
 
             <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setIsAddDealModalOpen(true)}
+                className="flex items-center space-x-2 px-4 py-2 bg-primary hover:bg-primary/90 rounded-lg text-primary-foreground transition-colors"
+                aria-label="Add new deal"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Deal</span>
+              </button>
               <div className="text-right">
                 <div className="text-2xl font-bold text-green-400">
                   {formatCurrency(dealsStore.forecastData.weightedForecast)}
@@ -547,6 +598,13 @@ const Deals = observer(() => {
           </div>
         </div>
       )}
+
+      {/* Add Deal Modal */}
+      <AddDealModal
+        isOpen={isAddDealModalOpen}
+        onClose={() => setIsAddDealModalOpen(false)}
+        onSubmit={handleAddDeal}
+      />
     </MainLayout>
   )
 })
