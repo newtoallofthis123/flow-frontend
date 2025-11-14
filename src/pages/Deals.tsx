@@ -1,4 +1,5 @@
 import { observer } from 'mobx-react-lite'
+import { useState, useRef } from 'react'
 import { useStore } from '../stores'
 import MainLayout from '../components/layout/MainLayout'
 import SearchBar from '../components/ui/SearchBar'
@@ -12,6 +13,9 @@ const Deals = observer(() => {
   const { dealsStore } = useStore()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const [draggedDealId, setDraggedDealId] = useState<string | null>(null)
+  const [dragOverStage, setDragOverStage] = useState<DealStage | null>(null)
+  const dragStartPosRef = useRef<{ x: number; y: number } | null>(null)
 
   const selectedDeal = id
     ? dealsStore.deals.find(d => d.id === id)
@@ -85,15 +89,92 @@ const Deals = observer(() => {
     }
   }
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    dragStartPosRef.current = { x: e.clientX, y: e.clientY }
+  }
+
+  const handleDragStart = (e: React.DragEvent, deal: Deal) => {
+    setDraggedDealId(deal.id)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', deal.id)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedDealId(null)
+    setDragOverStage(null)
+    dragStartPosRef.current = null
+  }
+
+  const handleDragOver = (e: React.DragEvent, stage: DealStage) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOverStage(stage)
+  }
+
+  const handleDragLeave = () => {
+    setDragOverStage(null)
+  }
+
+  const handleDrop = async (e: React.DragEvent, targetStage: DealStage) => {
+    e.preventDefault()
+    const dealId = e.dataTransfer.getData('text/plain')
+    
+    if (!dealId) {
+      setDragOverStage(null)
+      setDraggedDealId(null)
+      return
+    }
+
+    const deal = dealsStore.deals.find(d => d.id === dealId)
+    if (!deal || deal.stage === targetStage) {
+      setDragOverStage(null)
+      setDraggedDealId(null)
+      return
+    }
+
+    try {
+      // Update backend - the store will handle the UI update
+      await dealsStore.updateDealStage(dealId, targetStage)
+      // Refresh stats after stage change
+      await dealsStore.fetchStageStats()
+      await dealsStore.fetchForecast()
+    } catch (error) {
+      console.error('Failed to update deal stage:', error)
+    } finally {
+      setDragOverStage(null)
+      setDraggedDealId(null)
+    }
+  }
+
+  const handleCardClick = (e: React.MouseEvent, deal: Deal) => {
+    // Only navigate if this was a click (not a drag)
+    // Check if mouse moved significantly from initial position
+    if (dragStartPosRef.current) {
+      const dx = Math.abs(e.clientX - dragStartPosRef.current.x)
+      const dy = Math.abs(e.clientY - dragStartPosRef.current.y)
+      // If moved more than 5px, it was a drag, not a click
+      if (dx > 5 || dy > 5) {
+        return
+      }
+    }
+    navigate(`/deals/${deal.id}`)
+  }
+
   const DealCard = ({ deal }: { deal: Deal }) => (
     <div
-      onClick={() => navigate(`/deals/${deal.id}`)}
-      className={`p-4 bg-card border border-border rounded-lg cursor-pointer hover:bg-accent/50 transition-all ${
+      draggable={true}
+      onMouseDown={handleMouseDown}
+      onDragStart={(e) => handleDragStart(e, deal)}
+      onDragEnd={handleDragEnd}
+      onClick={(e) => handleCardClick(e, deal)}
+      className={`p-4 bg-card border border-border rounded-lg cursor-move hover:bg-accent/50 transition-all ${
         id === deal.id ? 'ring-2 ring-primary' : ''
+      } ${
+        draggedDealId === deal.id ? 'opacity-50 scale-95' : ''
       }`}
     >
       {/* Deal Header */}
-      <div className="flex items-start justify-between mb-3">
+      <div className="flex items-start justify-between mb-3" style={{ pointerEvents: 'none' }}>
         <div className="flex-1 min-w-0">
           <h4 className="font-semibold text-card-foreground text-sm truncate mb-1">{deal.title}</h4>
           <div className="flex items-center space-x-1 text-xs text-muted-foreground">
@@ -105,13 +186,17 @@ const Deals = observer(() => {
             <span className="truncate">{deal.company}</span>
           </div>
         </div>
-        <button className="text-muted-foreground hover:text-foreground transition-colors">
+        <button 
+          className="text-muted-foreground hover:text-foreground transition-colors"
+          style={{ pointerEvents: 'auto' }}
+          onClick={(e) => e.stopPropagation()}
+        >
           <MoreHorizontal className="w-4 h-4" />
         </button>
       </div>
 
       {/* Deal Value and Probability */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-3" style={{ pointerEvents: 'none' }}>
         <div className="text-lg font-bold text-green-400">
           {formatCurrency(deal.value)}
         </div>
@@ -123,7 +208,7 @@ const Deals = observer(() => {
       </div>
 
       {/* Deal Info */}
-      <div className="space-y-2 mb-3">
+      <div className="space-y-2 mb-3" style={{ pointerEvents: 'none' }}>
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center space-x-1 text-muted-foreground">
             <Calendar className="w-3 h-3" />
@@ -157,7 +242,7 @@ const Deals = observer(() => {
 
       {/* Tags */}
       {deal.tags && deal.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-1" style={{ pointerEvents: 'none' }}>
           {deal.tags.slice(0, 2).map((tag) => (
             <span key={tag} className="px-2 py-0.5 bg-secondary text-secondary-foreground text-xs rounded">
               {tag}
@@ -178,11 +263,19 @@ const Deals = observer(() => {
       ? dealsStore.stageStats.find(s => s.stage === stage)
       : undefined
     const totalValue = deals.reduce((sum, deal) => sum + deal.value, 0)
+    const isDragOver = dragOverStage === stage
 
     return (
-      <div className="flex-1 min-w-80">
+      <div 
+        className="flex-1 min-w-80"
+        onDragOver={(e) => handleDragOver(e, stage)}
+        onDragLeave={handleDragLeave}
+        onDrop={(e) => handleDrop(e, stage)}
+      >
         {/* Column Header */}
-        <div className="bg-card rounded-lg p-4 mb-4 border border-border">
+        <div className={`bg-card rounded-lg p-4 mb-4 border border-border transition-all ${
+          isDragOver ? 'border-primary ring-2 ring-primary/20 bg-primary/5' : ''
+        }`}>
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center space-x-2">
               <h3 className={`font-semibold ${getStageColor(stage)}`}>
@@ -209,10 +302,17 @@ const Deals = observer(() => {
         </div>
 
         {/* Deal Cards */}
-        <div className="space-y-3">
+        <div className={`space-y-3 min-h-[200px] transition-all ${
+          isDragOver ? 'bg-primary/5 rounded-lg p-2 border-2 border-dashed border-primary' : ''
+        }`}>
           {deals.map((deal) => (
             <DealCard key={deal.id} deal={deal} />
           ))}
+          {isDragOver && draggedDealId && !deals.find(d => d.id === draggedDealId) && (
+            <div className="p-4 bg-primary/10 border-2 border-dashed border-primary rounded-lg text-center text-sm text-muted-foreground">
+              Drop here to move deal
+            </div>
+          )}
         </div>
       </div>
     )

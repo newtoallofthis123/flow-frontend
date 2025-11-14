@@ -435,7 +435,7 @@ export class DealsStore extends BaseStore {
     return this.executeAsync(
       async () => {
         const deal = await dealsApi.updateDealStage(dealId, newStage)
-        return deal
+        return this.transformDeal(deal)
       },
       {
         onSuccess: (deal) => {
