@@ -7,6 +7,7 @@ import HealthScore from '../components/ui/HealthScore'
 import SentimentIndicator from '../components/ui/SentimentIndicator'
 import AIInsight from '../components/ui/AIInsight'
 import AddCommunicationModal from '../components/ui/AddCommunicationModal'
+import AddContactModal from '../components/ui/AddContactModal'
 import { contactsApi } from '../api/contacts.api'
 import { Phone, Mail, Building, Calendar, MessageSquare, DollarSign, Tag, Clock, TrendingUp, User, Plus } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
@@ -16,6 +17,7 @@ const Contacts = observer(() => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isAddContactModalOpen, setIsAddContactModalOpen] = useState(false)
 
   // Fetch full contact details when ID changes (includes communication events)
   useEffect(() => {
@@ -80,6 +82,44 @@ const Contacts = observer(() => {
     }
   }
 
+  const handleAddContact = async (data: {
+    name: string
+    email: string
+    phone: string
+    company: string
+    title: string
+    tags?: string[]
+    notes?: string
+  }) => {
+    try {
+      // Create contact data - notes is sent as string to API, but Contact interface expects array
+      const contactData: any = {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        company: data.company,
+        title: data.title,
+        avatar: undefined,
+        relationshipHealth: 'medium',
+        lastContact: new Date(),
+        nextFollowUp: undefined,
+        sentiment: 'neutral',
+        totalDeals: 0,
+        totalValue: 0,
+        tags: data.tags || [],
+        notes: data.notes || '', // Send as string to API
+        communicationHistory: [],
+        aiInsights: [],
+      }
+      const newContact = await contactsStore.createContact(contactData)
+      // Navigate to the new contact
+      navigate(`/contacts/${newContact.id}`)
+    } catch (error) {
+      console.error('Error adding contact:', error)
+      throw error
+    }
+  }
+
   return (
     <MainLayout>
       <div className="h-full flex">
@@ -89,9 +129,19 @@ const Contacts = observer(() => {
           <div className="p-6 border-b border-border">
             <div className="flex items-center justify-between mb-4">
               <h1 className="text-2xl font-bold text-foreground">Contacts</h1>
-              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                <User className="w-4 h-4" />
-                <span>{contactsStore.contactStats.total}</span>
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                  <User className="w-4 h-4" />
+                  <span>{contactsStore.contactStats.total}</span>
+                </div>
+                <button
+                  onClick={() => setIsAddContactModalOpen(true)}
+                  className="flex items-center space-x-2 px-3 py-1.5 bg-primary hover:bg-primary/90 rounded-lg text-primary-foreground text-sm transition-colors"
+                  aria-label="Add new contact"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add Contact</span>
+                </button>
               </div>
             </div>
 
@@ -315,26 +365,6 @@ const Contacts = observer(() => {
 
                   {/* Sidebar */}
                   <div className="space-y-6">
-                    {/* AI Insights */}
-                    <div>
-                      <h3 className="text-lg font-semibold text-foreground mb-4">AI Insights</h3>
-                      <div className="space-y-4">
-                        {(selectedContact.aiInsights || []).map((insight) => (
-                          <AIInsight
-                            key={insight.id}
-                            type={insight.type}
-                            title={insight.title}
-                            description={insight.description}
-                            confidence={insight.confidence}
-                            actionable={insight.actionable}
-                            suggestedAction={insight.suggestedAction}
-                            size="sm"
-                            variant="card"
-                          />
-                        ))}
-                      </div>
-                    </div>
-
                     {/* Contact Details */}
                     <div className="bg-card rounded-lg p-4 border border-border">
                       <h4 className="font-semibold text-card-foreground mb-3">Contact Details</h4>
@@ -367,15 +397,33 @@ const Contacts = observer(() => {
                       </div>
                     </div>
 
-                    {/* Notes */}
-                    {selectedContact.notes && selectedContact.notes.length > 0 && (
+                    {/* AI Insights */}
+                    {(selectedContact.aiInsights && selectedContact.aiInsights.length > 0) ? (
                       <div className="bg-card rounded-lg p-4 border border-border">
-                        <h4 className="font-semibold text-card-foreground mb-3">Notes</h4>
-                        <div className="space-y-2">
-                          {selectedContact.notes.map((note, index) => (
-                            <p key={index} className="text-sm text-muted-foreground">• {note}</p>
+                        <h4 className="font-semibold text-card-foreground mb-3">AI Insights</h4>
+                        <div className="space-y-4">
+                          {selectedContact.aiInsights
+                            .slice()
+                            .sort((a, b) => b.date.getTime() - a.date.getTime())
+                            .map((insight) => (
+                            <AIInsight
+                              key={insight.id}
+                              type={insight.type}
+                              title={insight.title}
+                              description={insight.description}
+                              confidence={insight.confidence}
+                              actionable={insight.actionable}
+                              suggestedAction={insight.suggestedAction}
+                              size="sm"
+                              variant="card"
+                            />
                           ))}
                         </div>
+                      </div>
+                    ) : (
+                      <div className="bg-card rounded-lg p-4 border border-border">
+                        <h4 className="font-semibold text-card-foreground mb-3">AI Insights</h4>
+                        <p className="text-sm text-muted-foreground">No AI insights available yet.</p>
                       </div>
                     )}
                   </div>
@@ -403,6 +451,13 @@ const Contacts = observer(() => {
           contactName={selectedContact.name}
         />
       )}
+
+      {/* Add Contact Modal */}
+      <AddContactModal
+        isOpen={isAddContactModalOpen}
+        onClose={() => setIsAddContactModalOpen(false)}
+        onSubmit={handleAddContact}
+      />
     </MainLayout>
   )
 })

@@ -216,16 +216,16 @@ export class ContactsStore extends BaseStore {
           aiAnalysis: event.aiAnalysis || event.ai_analysis,
         }))
       })(),
-      aiInsights: Array.isArray(apiContact.aiInsights)
-        ? apiContact.aiInsights.map((insight: any) => ({
+      aiInsights: Array.isArray(apiContact.aiInsights) || Array.isArray(apiContact.ai_insights)
+        ? (apiContact.aiInsights || apiContact.ai_insights || []).map((insight: any) => ({
             id: insight.id,
-            type: insight.type,
+            type: insight.type || insight.insight_type,
             title: insight.title,
             description: insight.description,
             confidence: insight.confidence || 0,
             actionable: insight.actionable || false,
             suggestedAction: insight.suggestedAction || insight.suggested_action,
-            date: new Date(insight.date),
+            date: insight.date ? new Date(insight.date) : (insight.inserted_at ? new Date(insight.inserted_at) : new Date()),
           }))
         : [],
     }
