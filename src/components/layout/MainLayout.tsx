@@ -2,6 +2,7 @@ import { ReactNode } from 'react'
 import Sidebar from './Sidebar'
 import Header from './Header'
 import AICopilot from './AICopilot'
+import AIChatBubble from '../ui/AIChatBubble'
 
 interface MainLayoutProps {
   children: ReactNode
@@ -18,6 +19,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         </main>
         <AICopilot />
       </div>
+      <AIChatBubble />
     </div>
   )
 }
