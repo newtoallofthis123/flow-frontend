@@ -1,18 +1,21 @@
 import { observer } from 'mobx-react-lite'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useStore } from '../stores'
 import MainLayout from '../components/layout/MainLayout'
 import SearchBar from '../components/ui/SearchBar'
 import HealthScore from '../components/ui/HealthScore'
 import SentimentIndicator from '../components/ui/SentimentIndicator'
 import AIInsight from '../components/ui/AIInsight'
-import { Phone, Mail, Building, Calendar, MessageSquare, DollarSign, Tag, Clock, TrendingUp, User } from 'lucide-react'
+import AddCommunicationModal from '../components/ui/AddCommunicationModal'
+import { contactsApi } from '../api/contacts.api'
+import { Phone, Mail, Building, Calendar, MessageSquare, DollarSign, Tag, Clock, TrendingUp, User, Plus } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
 
 const Contacts = observer(() => {
   const { contactsStore } = useStore()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   // Fetch full contact details when ID changes (includes communication events)
   useEffect(() => {
@@ -63,6 +66,19 @@ const Contacts = observer(() => {
     'meetings this week',
     'overdue follow-ups'
   ]
+
+  const handleAddCommunication = async (data: { subject: string; summary: string; occurred_at: string }) => {
+    if (!id) return
+    
+    try {
+      await contactsApi.addCommunication(id, data)
+      // Refresh contact to get updated communication history
+      await contactsStore.fetchContact(id)
+    } catch (error) {
+      console.error('Error adding communication:', error)
+      throw error
+    }
+  }
 
   return (
     <MainLayout>
@@ -229,6 +245,15 @@ const Contacts = observer(() => {
                     <MessageSquare className="w-4 h-4" />
                     <span>Message</span>
                   </button>
+                  <div className="h-6 w-px bg-border mx-1" />
+                  <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="flex items-center justify-center w-10 h-10 bg-accent hover:bg-accent/80 rounded-lg text-accent-foreground transition-colors border border-border"
+                    aria-label="Add communication"
+                    title="Add communication"
+                  >
+                    <Plus className="w-5 h-5" />
+                  </button>
                 </div>
               </div>
 
@@ -368,6 +393,16 @@ const Contacts = observer(() => {
           )}
         </div>
       </div>
+
+      {/* Add Communication Modal */}
+      {selectedContact && (
+        <AddCommunicationModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleAddCommunication}
+          contactName={selectedContact.name}
+        />
+      )}
     </MainLayout>
   )
 })

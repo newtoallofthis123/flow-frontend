@@ -2,7 +2,6 @@ import { ReactNode } from 'react'
 import Sidebar from './Sidebar'
 import Header from './Header'
 import AICopilot from './AICopilot'
-import AIChatBubble from '../ui/AIChatBubble'
 
 interface MainLayoutProps {
   children: ReactNode
@@ -14,12 +13,11 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       <Header />
       <div className="flex h-[calc(100vh-4rem)]">
         <Sidebar />
-        <main className="flex-1 overflow-y-auto bg-background">
+        <main className="flex-1 overflow-y-auto scrollbar-hide bg-background">
           {children}
         </main>
         <AICopilot />
       </div>
-      <AIChatBubble />
     </div>
   )
 }

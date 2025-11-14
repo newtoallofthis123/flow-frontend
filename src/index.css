@@ -128,21 +128,22 @@
   transition-duration: 150ms;
 }
 
-/* Scrollbar styling for dark theme */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+/* Hide scrollbars but maintain scroll functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
-::-webkit-scrollbar-thumb {
-  background: oklch(1 0 0 / 0.1);
-  border-radius: 4px;
+/* Apply to all scrollable elements */
+* {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: oklch(1 0 0 / 0.15);
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }

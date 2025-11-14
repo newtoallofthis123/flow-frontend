@@ -7,6 +7,7 @@ import { DealsStore } from './DealsStore'
 import { MessagesStore } from './MessagesStore'
 import { CalendarStore } from './CalendarStore'
 import { ThemeStore } from './ThemeStore'
+import { UIStore } from './UIStore'
 
 export class RootStore {
   userStore: UserStore
@@ -16,6 +17,7 @@ export class RootStore {
   messagesStore: MessagesStore
   calendarStore: CalendarStore
   themeStore: ThemeStore
+  uiStore: UIStore
   
   currentRoute: string = '/'
   routeParams: Record<string, string> = {}
@@ -30,6 +32,7 @@ export class RootStore {
     this.messagesStore = new MessagesStore()
     this.calendarStore = new CalendarStore()
     this.themeStore = new ThemeStore()
+    this.uiStore = new UIStore()
     makeAutoObservable(this)
     this.setupWebSocketHandlers()
     this.setupRouteReactions()

@@ -29,10 +29,9 @@ export const contactsApi = {
   addCommunication: (
     contactId: string,
     data: {
-      type: 'email' | 'call' | 'meeting' | 'note'
-      date: Date
-      subject?: string
+      subject: string
       summary: string
+      occurred_at: string // ISO datetime string
     }
   ) => apiClient.post<CommunicationEvent>(`/api/contacts/${contactId}/communication`, data),
 
