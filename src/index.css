@@ -59,7 +59,7 @@
   --accent: oklch(0.96 0 0); /* Light gray accent */
   --accent-foreground: oklch(0.09 0 0); /* Dark text */
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.5 0 0); /* Much darker border for better contrast in light mode */
+  --border: oklch(0.88 0 0); /* Soft light border for light mode */
   --input: oklch(0.96 0 0); /* Light gray input background */
   --ring: oklch(0.09 0 0); /* Black ring for focus */
   --chart-1: oklch(0.646 0.222 41.116);

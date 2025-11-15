@@ -25,10 +25,10 @@ const HealthScore = ({
   }
 
   const getScoreBgColor = () => {
-    if (score >= 80) return 'bg-green-900/20 border-green-700/30'
-    if (score >= 60) return 'bg-blue-900/20 border-blue-700/30'
-    if (score >= 40) return 'bg-yellow-900/20 border-yellow-700/30'
-    return 'bg-red-900/20 border-red-700/30'
+    if (score >= 80) return 'bg-green-100/50 dark:bg-green-900/20 border-green-300/50 dark:border-green-700/30'
+    if (score >= 60) return 'bg-blue-100/50 dark:bg-blue-900/20 border-blue-300/50 dark:border-blue-700/30'
+    if (score >= 40) return 'bg-yellow-100/50 dark:bg-yellow-900/20 border-yellow-300/50 dark:border-yellow-700/30'
+    return 'bg-red-100/50 dark:bg-red-900/20 border-red-300/50 dark:border-red-700/30'
   }
 
   const getTrendIcon = () => {

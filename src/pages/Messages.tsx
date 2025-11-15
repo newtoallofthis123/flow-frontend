@@ -120,15 +120,15 @@ const Messages = observer(() => {
           <div className="p-4 border-b border-border bg-card/30">
             <h3 className="text-sm font-semibold text-foreground mb-3">Overall Sentiment</h3>
             <div className="grid grid-cols-3 gap-2">
-              <div className="bg-green-100 dark:bg-green-900/20 border border-green-300 dark:border-green-700/30 rounded p-2 text-center">
+              <div className="bg-green-100 dark:bg-green-900/20 border border-green-300/50 dark:border-green-700/30 rounded p-2 text-center">
                 <div className="text-green-600 dark:text-green-400 font-bold">{Math.round(messagesStore.sentimentOverview.positive)}%</div>
                 <div className="text-xs text-muted-foreground">Positive</div>
               </div>
-              <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700/30 rounded p-2 text-center">
+              <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-300/50 dark:border-yellow-700/30 rounded p-2 text-center">
                 <div className="text-yellow-600 dark:text-yellow-400 font-bold">{Math.round(messagesStore.sentimentOverview.neutral)}%</div>
                 <div className="text-xs text-muted-foreground">Neutral</div>
               </div>
-              <div className="bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-700/30 rounded p-2 text-center">
+              <div className="bg-red-100 dark:bg-red-900/20 border border-red-300/50 dark:border-red-700/30 rounded p-2 text-center">
                 <div className="text-red-600 dark:text-red-400 font-bold">{Math.round(messagesStore.sentimentOverview.negative)}%</div>
                 <div className="text-xs text-muted-foreground">Negative</div>
               </div>
@@ -261,7 +261,7 @@ const Messages = observer(() => {
                       {/* Avatar */}
                       <div className="w-8 h-8 bg-secondary rounded-lg flex items-center justify-center flex-shrink-0">
                         {message.senderType === 'user' ? (
-                          <User className="w-4 h-4 text-blue-400" />
+                          <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                         ) : (
                           <span className="text-card-foreground text-sm">{(message.senderName || '?').charAt(0).toUpperCase()}</span>
                         )}
@@ -317,9 +317,9 @@ const Messages = observer(() => {
                                   <div>
                                     <span className="text-xs text-muted-foreground uppercase tracking-wide">Urgency Level</span>
                                     <p className={`text-sm font-medium capitalize ${
-                                      message.aiAnalysis.urgencyLevel === 'high' ? 'text-red-400' :
-                                      message.aiAnalysis.urgencyLevel === 'medium' ? 'text-yellow-400' :
-                                      'text-green-400'
+                                      message.aiAnalysis.urgencyLevel === 'high' ? 'text-red-600 dark:text-red-400' :
+                                      message.aiAnalysis.urgencyLevel === 'medium' ? 'text-yellow-600 dark:text-yellow-400' :
+                                      'text-green-600 dark:text-green-400'
                                     }`}>
                                       {message.aiAnalysis.urgencyLevel}
                                     </p>
@@ -335,7 +335,7 @@ const Messages = observer(() => {
                                     <span className="text-xs text-muted-foreground uppercase tracking-wide">Key Topics</span>
                                     <div className="flex flex-wrap gap-1 mt-1">
                                       {message.aiAnalysis.keyTopics.map((topic) => (
-                                        <span key={topic} className="px-2 py-0.5 bg-blue-900/20 border border-blue-700/30 text-blue-400 text-xs rounded">
+                                        <span key={topic} className="px-2 py-0.5 bg-blue-100/50 dark:bg-blue-900/20 border border-blue-300/50 dark:border-blue-700/30 text-blue-600 dark:text-blue-400 text-xs rounded">
                                           {topic}
                                         </span>
                                       ))}
@@ -362,7 +362,7 @@ const Messages = observer(() => {
                             {message.aiAnalysis.suggestedResponse && (
                               <div className="border-t border-border pt-3">
                                 <div className="flex items-center space-x-2 mb-2">
-                                  <Lightbulb className="w-4 h-4 text-yellow-400" />
+                                  <Lightbulb className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
                                   <span className="text-sm font-medium text-card-foreground">Suggested Response</span>
                                 </div>
                                 <p className="text-sm text-card-foreground bg-card rounded p-2 border border-border">
@@ -408,7 +408,7 @@ const Messages = observer(() => {
                     {messagesStore.smartCompose && messagesStore.smartCompose.toneAdjustments && (
                       <div className="flex items-center space-x-4 text-xs">
                         <div className="flex items-center space-x-1">
-                          <Zap className="w-3 h-3 text-yellow-400" />
+                          <Zap className="w-3 h-3 text-yellow-600 dark:text-yellow-400" />
                           <span className="text-muted-foreground">Current tone: {messagesStore.smartCompose.toneAdjustments.current}</span>
                         </div>
                         <div className="flex space-x-2">

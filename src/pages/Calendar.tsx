@@ -106,27 +106,27 @@ const Calendar = observer(() => {
   const getEventTypeColor = (type: string) => {
     switch (type) {
       case 'meeting':
-        return 'bg-blue-900/20 border-blue-700/30 text-blue-400'
+        return 'bg-blue-100/50 dark:bg-blue-900/20 border-blue-300/50 dark:border-blue-700/30 text-blue-600 dark:text-blue-400'
       case 'call':
-        return 'bg-green-900/20 border-green-700/30 text-green-400'
+        return 'bg-green-100/50 dark:bg-green-900/20 border-green-300/50 dark:border-green-700/30 text-green-600 dark:text-green-400'
       case 'demo':
-        return 'bg-purple-900/20 border-purple-700/30 text-purple-400'
+        return 'bg-purple-100/50 dark:bg-purple-900/20 border-purple-300/50 dark:border-purple-700/30 text-purple-600 dark:text-purple-400'
       case 'follow-up':
-        return 'bg-yellow-900/20 border-yellow-700/30 text-yellow-400'
+        return 'bg-yellow-100/50 dark:bg-yellow-900/20 border-yellow-300/50 dark:border-yellow-700/30 text-yellow-600 dark:text-yellow-400'
       default:
-        return 'bg-slate-900/20 border-slate-700/30 text-slate-400'
+        return 'bg-slate-100/50 dark:bg-slate-900/20 border-slate-300/50 dark:border-slate-700/30 text-slate-600 dark:text-slate-400'
     }
   }
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high':
-        return 'border-l-red-400'
+        return 'border-l-red-500 dark:border-l-red-400'
       case 'medium':
-        return 'border-l-yellow-400'
+        return 'border-l-yellow-500 dark:border-l-yellow-400'
       case 'low':
       default:
-        return 'border-l-blue-400'
+        return 'border-l-blue-500 dark:border-l-blue-400'
     }
   }
 
@@ -163,7 +163,7 @@ const Calendar = observer(() => {
             </div>
           </div>
           {event.priority === 'high' && (
-            <div className="px-2 py-1 bg-red-900/20 border border-red-700/30 rounded text-red-400 text-xs">
+            <div className="px-2 py-1 bg-red-100/50 dark:bg-red-900/20 border border-red-300/50 dark:border-red-700/30 rounded text-red-600 dark:text-red-400 text-xs">
               High Priority
             </div>
           )}
@@ -260,11 +260,11 @@ const Calendar = observer(() => {
           <div className="p-4 border-b border-border bg-card/30">
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-card rounded-lg p-3 border border-border">
-                <div className="text-lg font-bold text-blue-400">{calendarStore.calendarStats.meetingsThisWeek}</div>
+                <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{calendarStore.calendarStats.meetingsThisWeek}</div>
                 <div className="text-xs text-muted-foreground">Meetings This Week</div>
               </div>
               <div className="bg-card rounded-lg p-3 border border-border">
-                <div className="text-lg font-bold text-red-400">{calendarStore.calendarStats.highPriorityThisWeek}</div>
+                <div className="text-lg font-bold text-red-600 dark:text-red-400">{calendarStore.calendarStats.highPriorityThisWeek}</div>
                 <div className="text-xs text-muted-foreground">High Priority</div>
               </div>
             </div>
@@ -445,8 +445,8 @@ const Calendar = observer(() => {
                       {enhancedEvent.preparation.dealContext && (
                         <div className="mb-6">
                           <h4 className="font-semibold text-card-foreground mb-3">Deal Context</h4>
-                          <div className="p-3 bg-blue-900/20 border border-blue-700/30 rounded-lg">
-                            <p className="text-sm text-blue-300">{enhancedEvent.preparation.dealContext}</p>
+                          <div className="p-3 bg-blue-100/50 dark:bg-blue-900/20 border border-blue-300/50 dark:border-blue-700/30 rounded-lg">
+                            <p className="text-sm text-blue-700 dark:text-blue-300">{enhancedEvent.preparation.dealContext}</p>
                           </div>
                         </div>
                       )}
@@ -480,9 +480,9 @@ const Calendar = observer(() => {
                                 <div className="text-sm text-muted-foreground/70">{attendee.email}</div>
                               </div>
                               <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                attendee.status === 'accepted' ? 'bg-green-900/20 text-green-400' :
-                                attendee.status === 'declined' ? 'bg-red-900/20 text-red-400' :
-                                attendee.status === 'tentative' ? 'bg-yellow-900/20 text-yellow-400' :
+                                attendee.status === 'accepted' ? 'bg-green-100/50 dark:bg-green-900/20 text-green-600 dark:text-green-400' :
+                                attendee.status === 'declined' ? 'bg-red-100/50 dark:bg-red-900/20 text-red-600 dark:text-red-400' :
+                                attendee.status === 'tentative' ? 'bg-yellow-100/50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400' :
                                 'bg-muted text-muted-foreground'
                               }`}>
                                 {attendee.status}
@@ -524,11 +524,11 @@ const Calendar = observer(() => {
                     <div className="bg-card rounded-lg p-4 border border-border">
                       <h4 className="font-semibold text-card-foreground mb-3">Event Status</h4>
                       <div className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
-                        enhancedEvent.status === 'confirmed' ? 'bg-green-900/20 text-green-400' :
-                        enhancedEvent.status === 'scheduled' ? 'bg-blue-900/20 text-blue-400' :
+                        enhancedEvent.status === 'confirmed' ? 'bg-green-100/50 dark:bg-green-900/20 text-green-600 dark:text-green-400' :
+                        enhancedEvent.status === 'scheduled' ? 'bg-blue-100/50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' :
                         enhancedEvent.status === 'completed' ? 'bg-muted text-muted-foreground' :
-                        enhancedEvent.status === 'cancelled' ? 'bg-red-900/20 text-red-400' :
-                        'bg-yellow-900/20 text-yellow-400'
+                        enhancedEvent.status === 'cancelled' ? 'bg-red-100/50 dark:bg-red-900/20 text-red-600 dark:text-red-400' :
+                        'bg-yellow-100/50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400'
                       }`}>
                         {enhancedEvent.status.charAt(0).toUpperCase() + enhancedEvent.status.slice(1)}
                       </div>
@@ -548,13 +548,13 @@ const Calendar = observer(() => {
 
                     {/* Competitor Intel */}
                     {enhancedEvent.preparation.competitorIntel && enhancedEvent.preparation.competitorIntel.length > 0 && (
-                      <div className="bg-red-900/10 border border-red-700/30 rounded-lg p-4">
-                        <h4 className="font-semibold text-red-400 mb-3">Competitor Intelligence</h4>
+                      <div className="bg-red-100/50 dark:bg-red-900/10 border border-red-300/50 dark:border-red-700/30 rounded-lg p-4">
+                        <h4 className="font-semibold text-red-600 dark:text-red-400 mb-3">Competitor Intelligence</h4>
                         <div className="space-y-2">
                           {enhancedEvent.preparation.competitorIntel.map((intel, index) => (
                             <div key={index} className="flex items-start gap-2">
-                              <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-                              <p className="text-sm text-red-300">{intel}</p>
+                              <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                              <p className="text-sm text-red-700 dark:text-red-300">{intel}</p>
                             </div>
                           ))}
                         </div>

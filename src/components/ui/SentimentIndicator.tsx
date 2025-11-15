@@ -24,7 +24,7 @@ const SentimentIndicator = ({
           icon: Smile,
           color: 'text-green-600 dark:text-green-400',
           bgColor: 'bg-green-100 dark:bg-green-900/20',
-          borderColor: 'border-green-300 dark:border-green-700/30',
+          borderColor: 'border-green-300/50 dark:border-green-700/30',
           label: 'Positive'
         }
       case 'negative':
@@ -32,7 +32,7 @@ const SentimentIndicator = ({
           icon: Frown,
           color: 'text-red-600 dark:text-red-400',
           bgColor: 'bg-red-100 dark:bg-red-900/20',
-          borderColor: 'border-red-300 dark:border-red-700/30',
+          borderColor: 'border-red-300/50 dark:border-red-700/30',
           label: 'Negative'
         }
       case 'neutral':
@@ -41,7 +41,7 @@ const SentimentIndicator = ({
           icon: Meh,
           color: 'text-yellow-600 dark:text-yellow-400',
           bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
-          borderColor: 'border-yellow-300 dark:border-yellow-700/30',
+          borderColor: 'border-yellow-300/50 dark:border-yellow-700/30',
           label: 'Neutral'
         }
     }

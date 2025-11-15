@@ -9,7 +9,7 @@ import AIInsight from '../components/ui/AIInsight'
 import AddCommunicationModal from '../components/ui/AddCommunicationModal'
 import AddContactModal from '../components/ui/AddContactModal'
 import { contactsApi } from '../api/contacts.api'
-import { Phone, Mail, Building, Calendar, MessageSquare, DollarSign, Tag, Clock, TrendingUp, User, Plus } from 'lucide-react'
+import { Phone, Mail, Building, Calendar, MessageSquare, DollarSign, Tag, Clock, TrendingUp, User, Plus, Trash2 } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
 
 const Contacts = observer(() => {
@@ -18,6 +18,7 @@ const Contacts = observer(() => {
   const navigate = useNavigate()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isAddContactModalOpen, setIsAddContactModalOpen] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   // Fetch full contact details when ID changes (includes communication events)
   useEffect(() => {
@@ -113,10 +114,24 @@ const Contacts = observer(() => {
       }
       const newContact = await contactsStore.createContact(contactData)
       // Navigate to the new contact
-      navigate(`/contacts/${newContact.id}`)
+      if (newContact) {
+        navigate(`/contacts/${newContact.id}`)
+      }
     } catch (error) {
       console.error('Error adding contact:', error)
       throw error
+    }
+  }
+
+  const handleDeleteContact = async () => {
+    if (!id || !selectedContact) return
+    
+    try {
+      await contactsStore.deleteContact(id)
+      setShowDeleteConfirm(false)
+      navigate('/contacts')
+    } catch (error) {
+      console.error('Error deleting contact:', error)
     }
   }
 
@@ -164,11 +179,11 @@ const Contacts = observer(() => {
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-card rounded-lg p-3">
                 <div className="text-xs text-muted-foreground mb-1">High Value</div>
-                <div className="text-lg font-bold text-green-400">{contactsStore.contactStats.highValue}</div>
+                <div className="text-lg font-bold text-green-600 dark:text-green-400">{contactsStore.contactStats.highValue}</div>
               </div>
               <div className="bg-card rounded-lg p-3">
                 <div className="text-xs text-muted-foreground mb-1">At Risk</div>
-                <div className="text-lg font-bold text-red-400">{contactsStore.contactStats.atRisk}</div>
+                <div className="text-lg font-bold text-red-600 dark:text-red-400">{contactsStore.contactStats.atRisk}</div>
               </div>
             </div>
           </div>
@@ -212,7 +227,7 @@ const Contacts = observer(() => {
                       </div>
                     </div>
                     {contact.churnRisk > 60 && (
-                      <div className="px-2 py-1 bg-red-900/20 border border-red-700/30 rounded text-red-400 text-xs">
+                      <div className="px-2 py-1 bg-red-100/50 dark:bg-red-900/20 border border-red-300/50 dark:border-red-700/30 rounded text-red-600 dark:text-red-400 text-xs">
                         At Risk
                       </div>
                     )}
@@ -271,7 +286,7 @@ const Contacts = observer(() => {
                       variant="circular"
                     />
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-green-400">{formatCurrency(selectedContact.totalValue)}</div>
+                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(selectedContact.totalValue)}</div>
                       <div className="text-sm text-muted-foreground">{selectedContact.totalDeals} deals</div>
                     </div>
                   </div>
@@ -298,11 +313,20 @@ const Contacts = observer(() => {
                   <div className="h-6 w-px bg-border mx-1" />
                   <button
                     onClick={() => setIsModalOpen(true)}
-                    className="flex items-center justify-center w-10 h-10 bg-accent hover:bg-accent/80 rounded-lg text-accent-foreground transition-colors border border-border"
+                    className="flex cursor-pointer items-center justify-center w-10 h-10 bg-accent hover:bg-accent/80 rounded-lg text-accent-foreground transition-colors border border-border"
                     aria-label="Add communication"
                     title="Add communication"
                   >
                     <Plus className="w-5 h-5" />
+                  </button>
+                  <div className="h-6 w-px bg-border mx-1" />
+                  <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="flex cursor-pointer items-center space-x-2 px-4 py-2 bg-red-100/50 dark:bg-red-900/20 hover:bg-red-200/50 dark:hover:bg-red-900/30 border border-red-300/50 dark:border-red-700/30 rounded-lg text-red-600 dark:text-red-400 transition-colors"
+                    aria-label="Delete contact"
+                    title="Delete contact"
+                  >
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -326,10 +350,10 @@ const Contacts = observer(() => {
                           .map((event) => (
                           <div key={event.id} className="flex space-x-4">
                             <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center flex-shrink-0">
-                              {event.type === 'email' && <Mail className="w-5 h-5 text-blue-400" />}
-                              {event.type === 'call' && <Phone className="w-5 h-5 text-green-400" />}
-                              {event.type === 'meeting' && <Calendar className="w-5 h-5 text-purple-400" />}
-                              {event.type === 'note' && <MessageSquare className="w-5 h-5 text-yellow-400" />}
+                              {event.type === 'email' && <Mail className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
+                              {event.type === 'call' && <Phone className="w-5 h-5 text-green-600 dark:text-green-400" />}
+                              {event.type === 'meeting' && <Calendar className="w-5 h-5 text-purple-600 dark:text-purple-400" />}
+                              {event.type === 'note' && <MessageSquare className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />}
                             </div>
                             <div className="flex-1">
                               <div className="flex items-center justify-between mb-2">
@@ -458,6 +482,32 @@ const Contacts = observer(() => {
         onClose={() => setIsAddContactModalOpen(false)}
         onSubmit={handleAddContact}
       />
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteConfirm && selectedContact && (
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-card rounded-lg p-6 border border-border max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-card-foreground mb-2">Delete Contact</h3>
+            <p className="text-muted-foreground mb-6">
+              Are you sure you want to delete <span className="font-semibold text-card-foreground">{selectedContact.name}</span>? This action cannot be undone.
+            </p>
+            <div className="flex items-center justify-end space-x-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-4 py-2 bg-secondary hover:bg-secondary/80 rounded-lg text-secondary-foreground transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteContact}
+                className="px-4 py-2 bg-red-100/50 dark:bg-red-900/20 hover:bg-red-200/50 dark:hover:bg-red-900/30 border border-red-300/50 dark:border-red-700/30 rounded-lg text-red-600 dark:text-red-400 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </MainLayout>
   )
 })

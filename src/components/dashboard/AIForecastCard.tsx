@@ -18,26 +18,26 @@ const AIForecastCard = observer(() => {
   const getConfidenceColor = (confidence: string) => {
     switch (confidence) {
       case 'high':
-        return 'bg-green-400'
+        return 'bg-green-500 dark:bg-green-400'
       case 'medium':
-        return 'bg-yellow-400'
+        return 'bg-yellow-500 dark:bg-yellow-400'
       case 'low':
-        return 'bg-red-400'
+        return 'bg-red-500 dark:bg-red-400'
       default:
-        return 'bg-gray-400'
+        return 'bg-gray-500 dark:bg-gray-400'
     }
   }
 
   const getConfidenceText = (confidence: string) => {
     switch (confidence) {
       case 'high':
-        return 'text-green-400'
+        return 'text-green-600 dark:text-green-400'
       case 'medium':
-        return 'text-yellow-400'
+        return 'text-yellow-600 dark:text-yellow-400'
       case 'low':
-        return 'text-red-400'
+        return 'text-red-600 dark:text-red-400'
       default:
-        return 'text-gray-400'
+        return 'text-gray-600 dark:text-gray-400'
     }
   }
 
@@ -50,7 +50,7 @@ const AIForecastCard = observer(() => {
         </h2>
         <div className="flex space-x-1">
           <div className={`w-2 h-2 ${getConfidenceColor(forecastData.confidence)} rounded-full`}></div>
-          <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+          <div className="w-2 h-2 bg-yellow-500 dark:bg-yellow-400 rounded-full"></div>
         </div>
       </div>
 

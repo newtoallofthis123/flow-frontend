@@ -32,43 +32,43 @@ const AIInsight = ({
       case 'opportunity':
         return {
           icon: Target,
-          color: 'text-green-400',
-          bgColor: 'bg-green-900/20',
-          borderColor: 'border-green-700/30',
-          accentColor: 'bg-green-400'
+          color: 'text-green-600 dark:text-green-400',
+          bgColor: 'bg-green-100/50 dark:bg-green-900/20',
+          borderColor: 'border-green-300/50 dark:border-green-700/30',
+          accentColor: 'bg-green-500 dark:bg-green-400'
         }
       case 'risk':
         return {
           icon: AlertTriangle,
-          color: 'text-red-400',
-          bgColor: 'bg-red-900/20',
-          borderColor: 'border-red-700/30',
-          accentColor: 'bg-red-400'
+          color: 'text-red-600 dark:text-red-400',
+          bgColor: 'bg-red-100/50 dark:bg-red-900/20',
+          borderColor: 'border-red-300/50 dark:border-red-700/30',
+          accentColor: 'bg-red-500 dark:bg-red-400'
         }
       case 'suggestion':
         return {
           icon: Lightbulb,
-          color: 'text-blue-400',
-          bgColor: 'bg-blue-900/20',
-          borderColor: 'border-blue-700/30',
-          accentColor: 'bg-blue-400'
+          color: 'text-blue-600 dark:text-blue-400',
+          bgColor: 'bg-blue-100/50 dark:bg-blue-900/20',
+          borderColor: 'border-blue-300/50 dark:border-blue-700/30',
+          accentColor: 'bg-blue-500 dark:bg-blue-400'
         }
       case 'competitor':
         return {
           icon: Users,
-          color: 'text-purple-400',
-          bgColor: 'bg-purple-900/20',
-          borderColor: 'border-purple-700/30',
-          accentColor: 'bg-purple-400'
+          color: 'text-purple-600 dark:text-purple-400',
+          bgColor: 'bg-purple-100/50 dark:bg-purple-900/20',
+          borderColor: 'border-purple-300/50 dark:border-purple-700/30',
+          accentColor: 'bg-purple-500 dark:bg-purple-400'
         }
       case 'trend':
       default:
         return {
           icon: Brain,
-          color: 'text-yellow-400',
-          bgColor: 'bg-yellow-900/20',
-          borderColor: 'border-yellow-700/30',
-          accentColor: 'bg-yellow-400'
+          color: 'text-yellow-600 dark:text-yellow-400',
+          bgColor: 'bg-yellow-100/50 dark:bg-yellow-900/20',
+          borderColor: 'border-yellow-300/50 dark:border-yellow-700/30',
+          accentColor: 'bg-yellow-500 dark:bg-yellow-400'
         }
     }
   }
@@ -76,12 +76,12 @@ const AIInsight = ({
   const getImpactColor = () => {
     switch (impact) {
       case 'high':
-        return 'text-red-400'
+        return 'text-red-600 dark:text-red-400'
       case 'low':
-        return 'text-green-400'
+        return 'text-green-600 dark:text-green-400'
       case 'medium':
       default:
-        return 'text-yellow-400'
+        return 'text-yellow-600 dark:text-yellow-400'
     }
   }
 

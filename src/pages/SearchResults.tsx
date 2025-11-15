@@ -11,7 +11,7 @@ const SearchResults = observer(() => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const query = searchParams.get('q') || ''
-  
+
   const [isLoading, setIsLoading] = useState(true)
   const [results, setResults] = useState<NaturalLanguageSearchResponse | null>(null)
   const [activeTab, setActiveTab] = useState<'all' | 'contacts' | 'deals' | 'events'>('all')
@@ -27,7 +27,7 @@ const SearchResults = observer(() => {
     try {
       const response = await searchApi.naturalLanguageSearch(searchQuery)
       setResults(response)
-      
+
       // Auto-select tab based on results
       if (response.contacts.length > 0 && response.deals.length === 0 && response.events.length === 0) {
         setActiveTab('contacts')
@@ -43,9 +43,9 @@ const SearchResults = observer(() => {
     }
   }
 
-  const totalResults = (results?.contacts.length || 0) + 
-                      (results?.deals.length || 0) + 
-                      (results?.events.length || 0)
+  const totalResults = (results?.contacts.length || 0) +
+    (results?.deals.length || 0) +
+    (results?.events.length || 0)
 
   const filteredContacts = activeTab === 'all' || activeTab === 'contacts' ? results?.contacts || [] : []
   const filteredDeals = activeTab === 'all' || activeTab === 'deals' ? results?.deals || [] : []
@@ -109,43 +109,39 @@ const SearchResults = observer(() => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setActiveTab('all')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                activeTab === 'all'
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${activeTab === 'all'
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80'
-              }`}
+                }`}
             >
               All ({totalResults})
             </button>
             <button
               onClick={() => setActiveTab('contacts')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
-                activeTab === 'contacts'
+              className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${activeTab === 'contacts'
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80'
-              }`}
+                }`}
             >
               <Users className="w-4 h-4" />
               Contacts ({results?.contacts.length || 0})
             </button>
             <button
               onClick={() => setActiveTab('deals')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
-                activeTab === 'deals'
+              className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${activeTab === 'deals'
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80'
-              }`}
+                }`}
             >
               <Briefcase className="w-4 h-4" />
               Deals ({results?.deals.length || 0})
             </button>
             <button
               onClick={() => setActiveTab('events')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
-                activeTab === 'events'
+              className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${activeTab === 'events'
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80'
-              }`}
+                }`}
             >
               <Calendar className="w-4 h-4" />
               Events ({results?.events.length || 0})
@@ -231,13 +227,12 @@ const SearchResults = observer(() => {
                           <div className="flex items-center gap-2">
                             <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
                               <div
-                                className={`h-full ${
-                                  contact.churn_risk > 70
+                                className={`h-full ${contact.churn_risk > 70
                                     ? 'bg-red-500'
                                     : contact.churn_risk > 40
-                                    ? 'bg-yellow-500'
-                                    : 'bg-green-500'
-                                }`}
+                                      ? 'bg-yellow-500'
+                                      : 'bg-green-500'
+                                  }`}
                                 style={{ width: `${contact.churn_risk}%` }}
                               />
                             </div>
@@ -391,9 +386,9 @@ const SearchResults = observer(() => {
         {results?.metadata && (
           <div className="mt-8 p-4 bg-secondary/30 rounded-lg border border-border/50">
             <p className="text-sm text-muted-foreground text-center">
-              Searched {results.metadata.entities_searched.contacts + 
-                       results.metadata.entities_searched.deals + 
-                       results.metadata.entities_searched.events} entities in {results.metadata.duration_ms}ms
+              Searched {results.metadata.entities_searched.contacts +
+                results.metadata.entities_searched.deals +
+                results.metadata.entities_searched.events} entities in {results.metadata.duration_ms}ms
               {results.cached && ' • Results cached'}
             </p>
           </div>

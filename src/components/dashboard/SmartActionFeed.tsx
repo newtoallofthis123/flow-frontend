@@ -21,22 +21,22 @@ const SmartActionFeed = observer(() => {
   const getItemStyles = (type: string) => {
     switch (type) {
       case 'opportunity':
-        return 'border-l-blue-400 bg-blue-900/10'
+        return 'border-l-blue-500 dark:border-l-blue-400 bg-blue-100/30 dark:bg-blue-900/10'
       case 'warning':
-        return 'border-l-yellow-400 bg-yellow-900/10'
+        return 'border-l-yellow-500 dark:border-l-yellow-400 bg-yellow-100/30 dark:bg-yellow-900/10'
       default:
-        return 'border-l-green-400 bg-green-900/10'
+        return 'border-l-green-500 dark:border-l-green-400 bg-green-100/30 dark:bg-green-900/10'
     }
   }
 
   const getIconColor = (type: string) => {
     switch (type) {
       case 'opportunity':
-        return 'text-blue-400'
+        return 'text-blue-600 dark:text-blue-400'
       case 'warning':
-        return 'text-yellow-400'
+        return 'text-yellow-600 dark:text-yellow-400'
       default:
-        return 'text-green-400'
+        return 'text-green-600 dark:text-green-400'
     }
   }
 

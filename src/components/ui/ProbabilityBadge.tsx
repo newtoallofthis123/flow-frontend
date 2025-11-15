@@ -16,19 +16,19 @@ const ProbabilityBadge = ({
   const getConfidenceColor = () => {
     switch (confidence) {
       case 'high':
-        return 'bg-green-900/20 border-green-700/30 text-green-400'
+        return 'bg-green-100/50 dark:bg-green-900/20 border-green-300/50 dark:border-green-700/30 text-green-600 dark:text-green-400'
       case 'medium':
-        return 'bg-yellow-900/20 border-yellow-700/30 text-yellow-400'
+        return 'bg-yellow-100/50 dark:bg-yellow-900/20 border-yellow-300/50 dark:border-yellow-700/30 text-yellow-600 dark:text-yellow-400'
       case 'low':
-        return 'bg-red-900/20 border-red-700/30 text-red-400'
+        return 'bg-red-100/50 dark:bg-red-900/20 border-red-300/50 dark:border-red-700/30 text-red-600 dark:text-red-400'
     }
   }
 
   const getProbabilityColor = () => {
-    if (probability >= 80) return 'text-green-400'
-    if (probability >= 60) return 'text-blue-400'
-    if (probability >= 40) return 'text-yellow-400'
-    return 'text-red-400'
+    if (probability >= 80) return 'text-green-600 dark:text-green-400'
+    if (probability >= 60) return 'text-blue-600 dark:text-blue-400'
+    if (probability >= 40) return 'text-yellow-600 dark:text-yellow-400'
+    return 'text-red-600 dark:text-red-400'
   }
 
   const getSizeClasses = () => {
