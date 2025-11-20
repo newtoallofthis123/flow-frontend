@@ -20,7 +20,8 @@ export const calendarApi = {
     apiClient.get<CalendarEvent>(`/api/calendar/events/${id}`),
 
   // POST /api/calendar/events
-  createEvent: (data: Omit<CalendarEvent, 'id' | 'aiInsights' | 'preparation'>) =>
+  // Accepts data in either camelCase or snake_case format
+  createEvent: (data: any) =>
     apiClient.post<CalendarEvent>('/api/calendar/events', data),
 
   // PUT /api/calendar/events/:id

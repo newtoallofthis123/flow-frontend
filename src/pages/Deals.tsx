@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite'
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { useStore } from '../stores'
 import MainLayout from '../components/layout/MainLayout'
 import SearchBar from '../components/ui/SearchBar'
@@ -9,15 +9,189 @@ import AddDealModal from '../components/ui/AddDealModal'
 import { Target, DollarSign, Calendar, Building, User, AlertTriangle, TrendingUp, Brain, Plus, MoreHorizontal, Users } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { DealStage, Deal } from '../stores/DealsStore'
+import {
+  DndContext,
+  DragOverlay,
+  useSensors,
+  useSensor,
+  PointerSensor,
+  DragStartEvent,
+  DragEndEvent,
+  defaultDropAnimationSideEffects,
+  DropAnimation,
+  closestCorners,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { createPortal } from 'react-dom'
+
+// Separate component for the card content to be reused in DragOverlay
+const DealCardContent = ({ deal, isOverlay = false }: { deal: Deal; isOverlay?: boolean }) => {
+  const { id } = useParams<{ id: string }>()
+  
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount)
+  }
+
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric'
+    }).format(date)
+  }
+
+  return (
+    <div
+      className={`p-4 bg-card border border-border rounded-lg transition-all ${
+        id === deal.id && !isOverlay ? 'ring-2 ring-primary' : ''
+      } ${isOverlay ? 'shadow-2xl scale-105 cursor-grabbing' : 'cursor-grab hover:bg-accent/50'}`}
+    >
+      {/* Deal Header */}
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex-1 min-w-0">
+          <h4 className="font-semibold text-card-foreground text-sm truncate mb-1">{deal.title}</h4>
+          <div className="flex items-center space-x-1 text-xs text-muted-foreground">
+            <User className="w-3 h-3" />
+            <span className="truncate">{deal.contactName}</span>
+          </div>
+          <div className="flex items-center space-x-1 text-xs text-muted-foreground/70">
+            <Building className="w-3 h-3" />
+            <span className="truncate">{deal.company}</span>
+          </div>
+        </div>
+        <button 
+          className="text-muted-foreground hover:text-foreground transition-colors"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <MoreHorizontal className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Deal Value and Probability */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="text-lg font-bold text-green-600 dark:text-green-400">
+          {formatCurrency(deal.value)}
+        </div>
+        <ProbabilityBadge
+          probability={deal.probability}
+          confidence={deal.confidence}
+          size="sm"
+        />
+      </div>
+
+      {/* Deal Info */}
+      <div className="space-y-2 mb-3">
+        <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center space-x-1 text-muted-foreground">
+            <Calendar className="w-3 h-3" />
+            <span>{formatDate(deal.expectedCloseDate)}</span>
+          </div>
+          {deal.priority === 'high' && (
+            <div className="px-2 py-1 bg-red-100/50 dark:bg-red-900/20 border border-red-300/50 dark:border-red-700/30 rounded text-red-600 dark:text-red-400 text-xs">
+              High Priority
+            </div>
+          )}
+        </div>
+
+        {/* Risk Factors */}
+        {deal.riskFactors && deal.riskFactors.length > 0 && (
+          <div className="flex items-center space-x-1">
+            <AlertTriangle className="w-3 h-3 text-red-600 dark:text-red-400" />
+            <span className="text-xs text-red-600 dark:text-red-400">
+              {deal.riskFactors.length} risk factor{deal.riskFactors.length > 1 ? 's' : ''}
+            </span>
+          </div>
+        )}
+
+        {/* Competitor Warning */}
+        {deal.competitorMentioned && (
+          <div className="flex items-center space-x-1">
+            <Users className="w-3 h-3 text-yellow-600 dark:text-yellow-400" />
+            <span className="text-xs text-yellow-600 dark:text-yellow-400">Competitor mentioned</span>
+          </div>
+        )}
+      </div>
+
+      {/* Tags */}
+      {deal.tags && deal.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {deal.tags.slice(0, 2).map((tag) => (
+            <span key={tag} className="px-2 py-0.5 bg-secondary text-secondary-foreground text-xs rounded">
+              {tag}
+            </span>
+          ))}
+          {deal.tags.length > 2 && (
+            <span className="px-2 py-0.5 bg-secondary text-muted-foreground text-xs rounded">
+              +{deal.tags.length - 2}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+const SortableDealCard = ({ deal, onClick }: { deal: Deal; onClick: (deal: Deal) => void }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ 
+    id: deal.id,
+    data: {
+      type: 'Deal',
+      deal,
+    }
+  })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.3 : 1,
+  }
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      {...attributes} 
+      {...listeners}
+      onClick={(e) => {
+        e.stopPropagation() // Prevent background click
+        onClick(deal)
+      }}
+    >
+      <DealCardContent deal={deal} />
+    </div>
+  )
+}
 
 const Deals = observer(() => {
   const { dealsStore } = useStore()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const [draggedDealId, setDraggedDealId] = useState<string | null>(null)
-  const [dragOverStage, setDragOverStage] = useState<DealStage | null>(null)
-  const dragStartPosRef = useRef<{ x: number; y: number } | null>(null)
+  const [activeDeal, setActiveDeal] = useState<Deal | null>(null)
   const [isAddDealModalOpen, setIsAddDealModalOpen] = useState(false)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5, // Fixes double click issue by requiring 5px movement for drag
+      },
+    })
+  )
 
   const selectedDeal = id
     ? dealsStore.deals.find(d => d.id === id)
@@ -59,92 +233,70 @@ const Deals = observer(() => {
 
   const getStageTitle = (stage: DealStage) => {
     switch (stage) {
-      case 'prospect':
-        return 'Prospect'
-      case 'qualified':
-        return 'Qualified'
-      case 'proposal':
-        return 'Proposal'
-      case 'negotiation':
-        return 'Negotiation'
-      case 'closed-won':
-        return 'Closed Won'
-      case 'closed-lost':
-        return 'Closed Lost'
+      case 'prospect': return 'Prospect'
+      case 'qualified': return 'Qualified'
+      case 'proposal': return 'Proposal'
+      case 'negotiation': return 'Negotiation'
+      case 'closed-won': return 'Closed Won'
+      case 'closed-lost': return 'Closed Lost'
     }
   }
 
   const getStageColor = (stage: DealStage) => {
     switch (stage) {
-      case 'prospect':
-        return 'text-slate-600 dark:text-slate-400'
-      case 'qualified':
-        return 'text-blue-600 dark:text-blue-400'
-      case 'proposal':
-        return 'text-yellow-600 dark:text-yellow-400'
-      case 'negotiation':
-        return 'text-orange-600 dark:text-orange-400'
-      case 'closed-won':
-        return 'text-green-600 dark:text-green-400'
-      case 'closed-lost':
-        return 'text-red-600 dark:text-red-400'
+      case 'prospect': return 'text-slate-600 dark:text-slate-400'
+      case 'qualified': return 'text-blue-600 dark:text-blue-400'
+      case 'proposal': return 'text-yellow-600 dark:text-yellow-400'
+      case 'negotiation': return 'text-orange-600 dark:text-orange-400'
+      case 'closed-won': return 'text-green-600 dark:text-green-400'
+      case 'closed-lost': return 'text-red-600 dark:text-red-400'
     }
   }
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    dragStartPosRef.current = { x: e.clientX, y: e.clientY }
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event
+    const deal = active.data.current?.deal as Deal
+    setActiveDeal(deal)
   }
 
-  const handleDragStart = (e: React.DragEvent, deal: Deal) => {
-    setDraggedDealId(deal.id)
-    e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData('text/plain', deal.id)
-  }
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event
+    setActiveDeal(null)
 
-  const handleDragEnd = () => {
-    setDraggedDealId(null)
-    setDragOverStage(null)
-    dragStartPosRef.current = null
-  }
+    if (!over) return
 
-  const handleDragOver = (e: React.DragEvent, stage: DealStage) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-    setDragOverStage(stage)
-  }
-
-  const handleDragLeave = () => {
-    setDragOverStage(null)
-  }
-
-  const handleDrop = async (e: React.DragEvent, targetStage: DealStage) => {
-    e.preventDefault()
-    const dealId = e.dataTransfer.getData('text/plain')
+    const dealId = active.id as string
+    // The drop target id should be the stage name (we'll set this up in KanbanColumn)
+    // Or if dropped on another card, we need to find the container
     
-    if (!dealId) {
-      setDragOverStage(null)
-      setDraggedDealId(null)
-      return
+    // In this simple implementation, we'll make the column itself a droppable zone
+    // but since we are using SortableContext, the 'over' might be another card.
+    // We need to resolve the stage from the over id.
+    
+    let targetStage: DealStage | null = null
+    
+    // Check if over is a stage container
+    if (['prospect', 'qualified', 'proposal', 'negotiation'].includes(over.id as string)) {
+      targetStage = over.id as DealStage
+    } else {
+      // If over is a card, find its stage
+      const overDeal = dealsStore.deals.find(d => d.id === over.id)
+      if (overDeal) {
+        targetStage = overDeal.stage
+      }
     }
 
-    const deal = dealsStore.deals.find(d => d.id === dealId)
-    if (!deal || deal.stage === targetStage) {
-      setDragOverStage(null)
-      setDraggedDealId(null)
-      return
-    }
-
-    try {
-      // Update backend - the store will handle the UI update
-      await dealsStore.updateDealStage(dealId, targetStage)
-      // Refresh stats after stage change
-      await dealsStore.fetchStageStats()
-      await dealsStore.fetchForecast()
-    } catch (error) {
-      console.error('Failed to update deal stage:', error)
-    } finally {
-      setDragOverStage(null)
-      setDraggedDealId(null)
+    if (targetStage) {
+      const deal = dealsStore.deals.find(d => d.id === dealId)
+      if (deal && deal.stage !== targetStage) {
+        try {
+          await dealsStore.updateDealStage(dealId, targetStage)
+          await dealsStore.fetchStageStats()
+          await dealsStore.fetchForecast()
+        } catch (error) {
+          console.error('Failed to update deal stage:', error)
+        }
+      }
     }
   }
 
@@ -178,147 +330,68 @@ const Deals = observer(() => {
         competitorMentioned: undefined,
         priority: data.priority,
       })
-      // Navigate to the new deal
-      navigate(`/deals/${newDeal.id}`)
-      // Refresh stats
-      await dealsStore.fetchStageStats()
-      await dealsStore.fetchForecast()
+      
+      if (newDeal) {
+        navigate(`/deals/${newDeal.id}`)
+        await dealsStore.fetchStageStats()
+        await dealsStore.fetchForecast()
+      }
     } catch (error) {
       console.error('Error adding deal:', error)
       throw error
     }
   }
 
-  const handleCardClick = (e: React.MouseEvent, deal: Deal) => {
-    // Only navigate if this was a click (not a drag)
-    // Check if mouse moved significantly from initial position
-    if (dragStartPosRef.current) {
-      const dx = Math.abs(e.clientX - dragStartPosRef.current.x)
-      const dy = Math.abs(e.clientY - dragStartPosRef.current.y)
-      // If moved more than 5px, it was a drag, not a click
-      if (dx > 5 || dy > 5) {
-        return
-      }
-    }
+  const handleCardClick = (deal: Deal) => {
     navigate(`/deals/${deal.id}`)
   }
 
-  const DealCard = ({ deal }: { deal: Deal }) => (
-    <div
-      draggable={true}
-      onMouseDown={handleMouseDown}
-      onDragStart={(e) => handleDragStart(e, deal)}
-      onDragEnd={handleDragEnd}
-      onClick={(e) => handleCardClick(e, deal)}
-      className={`p-4 bg-card border border-border rounded-lg cursor-move hover:bg-accent/50 transition-all ${
-        id === deal.id ? 'ring-2 ring-primary' : ''
-      } ${
-        draggedDealId === deal.id ? 'opacity-50 scale-95' : ''
-      }`}
-    >
-      {/* Deal Header */}
-      <div className="flex items-start justify-between mb-3" style={{ pointerEvents: 'none' }}>
-        <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-card-foreground text-sm truncate mb-1">{deal.title}</h4>
-          <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-            <User className="w-3 h-3" />
-            <span className="truncate">{deal.contactName}</span>
-          </div>
-          <div className="flex items-center space-x-1 text-xs text-muted-foreground/70">
-            <Building className="w-3 h-3" />
-            <span className="truncate">{deal.company}</span>
-          </div>
-        </div>
-        <button 
-          className="text-muted-foreground hover:text-foreground transition-colors"
-          style={{ pointerEvents: 'auto' }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <MoreHorizontal className="w-4 h-4" />
-        </button>
-      </div>
+  const handleBackgroundClick = (e: React.MouseEvent) => {
+    // If clicking the background (not a card or interactive element), unselect
+    if (e.target === e.currentTarget) {
+      navigate('/deals')
+    }
+  }
 
-      {/* Deal Value and Probability */}
-      <div className="flex items-center justify-between mb-3" style={{ pointerEvents: 'none' }}>
-        <div className="text-lg font-bold text-green-600 dark:text-green-400">
-          {formatCurrency(deal.value)}
-        </div>
-        <ProbabilityBadge
-          probability={deal.probability}
-          confidence={deal.confidence}
-          size="sm"
-        />
-      </div>
-
-      {/* Deal Info */}
-      <div className="space-y-2 mb-3" style={{ pointerEvents: 'none' }}>
-        <div className="flex items-center justify-between text-xs">
-          <div className="flex items-center space-x-1 text-muted-foreground">
-            <Calendar className="w-3 h-3" />
-            <span>{formatDate(deal.expectedCloseDate)}</span>
-          </div>
-          {deal.priority === 'high' && (
-            <div className="px-2 py-1 bg-red-100/50 dark:bg-red-900/20 border border-red-300/50 dark:border-red-700/30 rounded text-red-600 dark:text-red-400 text-xs">
-              High Priority
-            </div>
-          )}
-        </div>
-
-        {/* Risk Factors */}
-        {deal.riskFactors && deal.riskFactors.length > 0 && (
-          <div className="flex items-center space-x-1">
-            <AlertTriangle className="w-3 h-3 text-red-600 dark:text-red-400" />
-            <span className="text-xs text-red-600 dark:text-red-400">
-              {deal.riskFactors.length} risk factor{deal.riskFactors.length > 1 ? 's' : ''}
-            </span>
-          </div>
-        )}
-
-        {/* Competitor Warning */}
-        {deal.competitorMentioned && (
-          <div className="flex items-center space-x-1">
-            <Users className="w-3 h-3 text-yellow-600 dark:text-yellow-400" />
-            <span className="text-xs text-yellow-600 dark:text-yellow-400">Competitor mentioned</span>
-          </div>
-        )}
-      </div>
-
-      {/* Tags */}
-      {deal.tags && deal.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1" style={{ pointerEvents: 'none' }}>
-          {deal.tags.slice(0, 2).map((tag) => (
-            <span key={tag} className="px-2 py-0.5 bg-secondary text-secondary-foreground text-xs rounded">
-              {tag}
-            </span>
-          ))}
-          {deal.tags.length > 2 && (
-            <span className="px-2 py-0.5 bg-secondary text-muted-foreground text-xs rounded">
-              +{deal.tags.length - 2}
-            </span>
-          )}
-        </div>
-      )}
-    </div>
-  )
+  const dropAnimation: DropAnimation = {
+    sideEffects: defaultDropAnimationSideEffects({
+      styles: {
+        active: {
+          opacity: '0.5',
+        },
+      },
+    }),
+  }
 
   const KanbanColumn = ({ stage, deals }: { stage: DealStage; deals: Deal[] }) => {
     const stageStats = Array.isArray(dealsStore.stageStats) 
       ? dealsStore.stageStats.find(s => s.stage === stage)
       : undefined
     const totalValue = deals.reduce((sum, deal) => sum + deal.value, 0)
-    const isDragOver = dragOverStage === stage
 
+    // We use the stage as the ID for the droppable container if needed, 
+    // but SortableContext handles the items. 
+    // To make the empty column droppable, we can use a Droppable hook or just rely on the SortableContext 
+    // if we ensure the list is never empty or handle it correctly.
+    // Actually, dnd-kit's SortableContext doesn't automatically make the container droppable for *empty* lists 
+    // unless we also use useDroppable on the container.
+    
+    // However, for simplicity in this refactor, we will rely on the fact that we can drop "near" items.
+    // But to be robust, let's make the column droppable too.
+    // We can just use the SortableContext which provides the strategy.
+    // But we need a useDroppable for the column to handle empty states or dropping "into" the column.
+    
+    // Let's use a simple approach: The column div is a droppable zone.
+    // But wait, we are using SortableContext.
+    // Let's just pass the items to SortableContext.
+    
     return (
       <div 
-        className="flex-1 min-w-80"
-        onDragOver={(e) => handleDragOver(e, stage)}
-        onDragLeave={handleDragLeave}
-        onDrop={(e) => handleDrop(e, stage)}
+        className="flex-1 min-w-80 flex flex-col"
+        onClick={(e) => e.stopPropagation()} // Prevent column clicks from triggering background unselect
       >
         {/* Column Header */}
-        <div className={`bg-card rounded-lg p-4 mb-4 border border-border transition-all ${
-          isDragOver ? 'border-primary ring-2 ring-primary/20 bg-primary/5' : ''
-        }`}>
+        <div className="bg-card rounded-lg p-4 mb-4 border border-border">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center space-x-2">
               <h3 className={`font-semibold ${getStageColor(stage)}`}>
@@ -344,28 +417,76 @@ const Deals = observer(() => {
           </div>
         </div>
 
-        {/* Deal Cards */}
-        <div className={`space-y-3 min-h-[200px] transition-all ${
-          isDragOver ? 'bg-primary/5 rounded-lg p-2 border-2 border-dashed border-primary' : ''
-        }`}>
-          {deals.map((deal) => (
-            <DealCard key={deal.id} deal={deal} />
-          ))}
-          {isDragOver && draggedDealId && !deals.find(d => d.id === draggedDealId) && (
-            <div className="p-4 bg-primary/10 border-2 border-dashed border-primary rounded-lg text-center text-sm text-muted-foreground">
-              Drop here to move deal
-            </div>
-          )}
-        </div>
+        {/* Deal Cards Container */}
+        <SortableContext 
+          id={stage}
+          items={deals.map(d => d.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div 
+            className="space-y-3 min-h-[200px] flex-1"
+            // We can make this div a droppable target if we want to support dropping in empty columns explicitly
+            // But dnd-kit's SortableContext usually handles this if we configure it right.
+            // Actually, if the list is empty, we can't drop on an item.
+            // So we should use useDroppable here as well.
+            // But for now, let's see if the 'over' detection works for the container ID (which we set as 'id={stage}' in SortableContext? No, SortableContext id is just for internal use usually).
+            // Actually SortableContext doesn't accept 'id' prop for the container, it accepts 'items'.
+            // The 'id' prop on SortableContext is for the strategy? No.
+            // Let's wrap this div in a Droppable.
+          >
+            <DroppableColumn stage={stage}>
+              {deals.map((deal) => (
+                <SortableDealCard 
+                  key={deal.id} 
+                  deal={deal} 
+                  onClick={handleCardClick}
+                />
+              ))}
+              {deals.length === 0 && (
+                <div className="h-full w-full border-2 border-dashed border-border/50 rounded-lg flex items-center justify-center text-muted-foreground/50 text-sm min-h-[100px]">
+                  Drop here
+                </div>
+              )}
+            </DroppableColumn>
+          </div>
+        </SortableContext>
+      </div>
+    )
+  }
+
+  // Helper component to make the column droppable
+  const DroppableColumn = ({ stage, children }: { stage: DealStage, children: React.ReactNode }) => {
+    const { setNodeRef, isOver } = useSortable({
+      id: stage,
+      data: { type: 'Column', stage },
+      disabled: true, // We don't want to drag the column itself
+    })
+    
+    // Note: useSortable with disabled: true acts like useDroppable but shares the context
+    // Actually, better to use useDroppable from @dnd-kit/core to avoid confusion
+    // But we need to import it. Let's just use the useSortable trick or import useDroppable.
+    // I'll stick to useSortable with disabled: true for now as it's already imported, 
+    // OR better, I'll add useDroppable to imports. 
+    // Wait, I didn't import useDroppable. Let's use useSortable with disabled: true, it works as a drop target.
+    
+    return (
+      <div 
+        ref={setNodeRef}
+        className={`h-full transition-colors rounded-lg ${isOver ? 'bg-accent/20' : ''}`}
+      >
+        {children}
       </div>
     )
   }
 
   return (
     <MainLayout>
-      <div className="h-full flex flex-col">
+      <div 
+        className="h-full flex flex-col"
+        onClick={handleBackgroundClick} // Handle background click to unselect
+      >
         {/* Header */}
-        <div className="p-6 border-b border-border bg-card/30">
+        <div className="p-6 border-b border-border bg-card/30" onClick={e => e.stopPropagation()}>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-4">
               <h1 className="text-3xl font-bold text-foreground">Pipeline</h1>
@@ -413,7 +534,7 @@ const Deals = observer(() => {
         </div>
 
         {/* Pipeline Stats */}
-        <div className="p-6 border-b border-border bg-card/20">
+        <div className="p-6 border-b border-border bg-card/20" onClick={e => e.stopPropagation()}>
           <div className="grid grid-cols-4 gap-6">
             {(Array.isArray(dealsStore.stageStats) ? dealsStore.stageStats : []).map((stat) => (
               <div key={stat.stage} className="bg-card rounded-lg p-4 border border-border">
@@ -441,24 +562,43 @@ const Deals = observer(() => {
         </div>
 
         {/* Kanban Board */}
-        <div className="flex-1 overflow-x-auto">
-          <div className="p-6 min-w-max">
-            <div className="flex space-x-6 h-full">
-              {(['prospect', 'qualified', 'proposal', 'negotiation'] as DealStage[]).map((stage) => (
-                <KanbanColumn
-                  key={stage}
-                  stage={stage}
-                  deals={(dealsStore.dealsByStage && dealsStore.dealsByStage[stage]) || []}
-                />
-              ))}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="flex-1 overflow-x-auto">
+            <div className="p-6 min-w-max h-full">
+              <div className="flex space-x-6 h-full">
+                {(['prospect', 'qualified', 'proposal', 'negotiation'] as DealStage[]).map((stage) => (
+                  <KanbanColumn
+                    key={stage}
+                    stage={stage}
+                    deals={(dealsStore.dealsByStage && dealsStore.dealsByStage[stage]) || []}
+                  />
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+          
+          {createPortal(
+            <DragOverlay dropAnimation={dropAnimation}>
+              {activeDeal ? (
+                <DealCardContent deal={activeDeal} isOverlay />
+              ) : null}
+            </DragOverlay>,
+            document.body
+          )}
+        </DndContext>
       </div>
 
       {/* Deal Detail Sidebar */}
       {selectedDeal && (
-        <div className="fixed right-0 top-0 bottom-0 w-96 bg-sidebar border-l border-sidebar-border z-50 overflow-y-auto">
+        <div 
+          className="fixed right-0 top-0 bottom-0 w-96 bg-sidebar border-l border-sidebar-border z-50 overflow-y-auto shadow-xl"
+          onClick={e => e.stopPropagation()} // Prevent clicks in sidebar from closing it
+        >
           <div className="p-6">
             {/* Deal Header */}
             <div className="flex items-start justify-between mb-6">

@@ -191,6 +191,31 @@ export class CalendarStore extends BaseStore {
         }
       })
     })
+
+    wsClient.on('event:preparation_ready', (data: { eventId: string; preparation: any }) => {
+      runInAction(() => {
+        const transformedPreparation = this.transformPreparation(data.preparation)
+        const event = this.events.find(e => e.id === data.eventId)
+        if (event) {
+          event.preparation = transformedPreparation
+        }
+        if (this.selectedEvent?.id === data.eventId) {
+          this.selectedEvent.preparation = transformedPreparation
+        }
+      })
+    })
+
+    wsClient.on('event:post_meeting_insights', (data: { eventId: string; insights: MeetingInsight[] }) => {
+      runInAction(() => {
+        const event = this.events.find(e => e.id === data.eventId)
+        if (event) {
+          event.aiInsights = data.insights
+        }
+        if (this.selectedEvent?.id === data.eventId) {
+          this.selectedEvent.aiInsights = data.insights
+        }
+      })
+    })
   }
 
   get filteredEvents() {
@@ -313,7 +338,7 @@ export class CalendarStore extends BaseStore {
       // Provide defaults for fields that might not be in backend response
       attendees: Array.isArray(apiEvent.attendees) ? apiEvent.attendees : [],
       aiInsights: Array.isArray(apiEvent.aiInsights) ? apiEvent.aiInsights : [],
-      preparation: apiEvent.preparation || {
+      preparation: apiEvent.preparation ? this.transformPreparation(apiEvent.preparation) : {
         suggestedTalkingPoints: [],
         recentInteractions: [],
         personalNotes: [],
@@ -374,10 +399,31 @@ export class CalendarStore extends BaseStore {
     )
   }
 
+  // Transform event data from camelCase to snake_case for API
+  private transformEventForApi(eventData: Omit<CalendarEvent, 'id' | 'aiInsights' | 'preparation'>): any {
+    return {
+      title: eventData.title,
+      description: eventData.description,
+      start_time: eventData.startTime.toISOString(),
+      end_time: eventData.endTime.toISOString(),
+      type: eventData.type,
+      contact_id: eventData.contactId,
+      deal_id: eventData.dealId,
+      location: eventData.location,
+      meeting_link: eventData.meetingLink,
+      attendees: eventData.attendees,
+      status: eventData.status,
+      priority: eventData.priority,
+      tags: eventData.tags,
+    }
+  }
+
   async createEvent(eventData: Omit<CalendarEvent, 'id' | 'aiInsights' | 'preparation'>) {
     return this.executeAsync(
       async () => {
-        const event = await calendarApi.createEvent(eventData)
+        // Transform to snake_case for API
+        const apiData = this.transformEventForApi(eventData)
+        const event = await calendarApi.createEvent(apiData)
         // Transform event including tag extraction
         return this.transformEvent(event)
       },
@@ -468,21 +514,51 @@ export class CalendarStore extends BaseStore {
     )
   }
 
+  // Transform API response to MeetingPreparation interface
+  private transformPreparation(apiPreparation: any): MeetingPreparation {
+    const competitorIntel = Array.isArray(apiPreparation.competitorIntel || apiPreparation.competitor_intel) 
+      ? (apiPreparation.competitorIntel || apiPreparation.competitor_intel).filter((item: string) => item && item.trim().toLowerCase() !== 'none')
+      : undefined
+    
+    return {
+      suggestedTalkingPoints: Array.isArray(apiPreparation.suggestedTalkingPoints || apiPreparation.suggested_talking_points) 
+        ? (apiPreparation.suggestedTalkingPoints || apiPreparation.suggested_talking_points) 
+        : [],
+      recentInteractions: Array.isArray(apiPreparation.recentInteractions || apiPreparation.recent_interactions) 
+        ? (apiPreparation.recentInteractions || apiPreparation.recent_interactions) 
+        : [],
+      dealContext: apiPreparation.dealContext || apiPreparation.deal_context || undefined,
+      competitorIntel: competitorIntel && competitorIntel.length > 0 ? competitorIntel : undefined,
+      personalNotes: Array.isArray(apiPreparation.personalNotes || apiPreparation.personal_notes) 
+        ? (apiPreparation.personalNotes || apiPreparation.personal_notes) 
+        : [],
+      documentsToShare: Array.isArray(apiPreparation.documentsToShare || apiPreparation.documents_to_share) 
+        ? (apiPreparation.documentsToShare || apiPreparation.documents_to_share) 
+        : [],
+    }
+  }
+
   async fetchPreparation(calendarId: string) {
     return this.executeAsync(
       async () => {
-        const preparation = await calendarApi.getPreparation(calendarId)
-        return preparation
+        console.log('Fetching preparation for calendarId:', calendarId)
+        const rawPreparation = await calendarApi.getPreparation(calendarId)
+        console.log('Raw preparation response:', rawPreparation)
+        const transformed = this.transformPreparation(rawPreparation)
+        console.log('Transformed preparation:', transformed)
+        return transformed
       },
       {
         onSuccess: (preparation) => {
-          if (this.selectedEvent) {
-            this.selectedEvent.preparation = preparation
-          }
-          const event = this.events.find(e => e.id === calendarId)
-          if (event) {
-            event.preparation = preparation
-          }
+          runInAction(() => {
+            if (this.selectedEvent && this.selectedEvent.id === calendarId) {
+              this.selectedEvent.preparation = preparation
+            }
+            const event = this.events.find(e => e.id === calendarId)
+            if (event) {
+              event.preparation = preparation
+            }
+          })
         },
         showLoading: false,
       }
