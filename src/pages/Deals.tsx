@@ -29,8 +29,10 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { createPortal } from 'react-dom'
 
+// ... imports
+
 // Separate component for the card content to be reused in DragOverlay
-const DealCardContent = ({ deal, isOverlay = false }: { deal: Deal; isOverlay?: boolean }) => {
+const DealCardContent = observer(({ deal, isOverlay = false }: { deal: Deal; isOverlay?: boolean }) => {
   const { id } = useParams<{ id: string }>()
   
   const formatCurrency = (amount: number) => {
@@ -138,7 +140,7 @@ const DealCardContent = ({ deal, isOverlay = false }: { deal: Deal; isOverlay?: 
       )}
     </div>
   )
-}
+})
 
 const SortableDealCard = ({ deal, onClick }: { deal: Deal; onClick: (deal: Deal) => void }) => {
   const {
@@ -178,12 +180,131 @@ const SortableDealCard = ({ deal, onClick }: { deal: Deal; onClick: (deal: Deal)
   )
 }
 
+// Helper component to make the column droppable
+const DroppableColumn = ({ stage, children }: { stage: DealStage, children: React.ReactNode }) => {
+  const { setNodeRef, isOver } = useSortable({
+    id: stage,
+    data: { type: 'Column', stage },
+    disabled: true, // We don't want to drag the column itself
+  })
+  
+  return (
+    <div 
+      ref={setNodeRef}
+      className={`h-full transition-colors rounded-lg ${isOver ? 'bg-accent/20' : ''}`}
+    >
+      {children}
+    </div>
+  )
+}
+
+const KanbanColumn = observer(({ stage, deals, onCardClick }: { stage: DealStage; deals: Deal[]; onCardClick: (deal: Deal) => void }) => {
+  const { dealsStore } = useStore()
+  
+  const stageStats = Array.isArray(dealsStore.stageStats) 
+    ? dealsStore.stageStats.find(s => s.stage === stage)
+    : undefined
+  const totalValue = deals.reduce((sum, deal) => sum + deal.value, 0)
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount)
+  }
+
+  const getStageTitle = (stage: DealStage) => {
+    switch (stage) {
+      case 'prospect': return 'Prospect'
+      case 'qualified': return 'Qualified'
+      case 'proposal': return 'Proposal'
+      case 'negotiation': return 'Negotiation'
+      case 'closed-won': return 'Closed Won'
+      case 'closed-lost': return 'Closed Lost'
+    }
+  }
+
+  const getStageColor = (stage: DealStage) => {
+    switch (stage) {
+      case 'prospect': return 'text-slate-600 dark:text-slate-400'
+      case 'qualified': return 'text-blue-600 dark:text-blue-400'
+      case 'proposal': return 'text-yellow-600 dark:text-yellow-400'
+      case 'negotiation': return 'text-orange-600 dark:text-orange-400'
+      case 'closed-won': return 'text-green-600 dark:text-green-400'
+      case 'closed-lost': return 'text-red-600 dark:text-red-400'
+    }
+  }
+
+  return (
+    <div 
+      className="flex-1 min-w-80 flex flex-col"
+      onClick={(e) => e.stopPropagation()} // Prevent column clicks from triggering background unselect
+    >
+      {/* Column Header */}
+      <div className="bg-card rounded-lg p-4 mb-4 border border-border">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center space-x-2">
+            <h3 className={`font-semibold ${getStageColor(stage)}`}>
+              {getStageTitle(stage)}
+            </h3>
+            <span className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded">
+              {deals.length}
+            </span>
+          </div>
+          <button className="text-muted-foreground hover:text-foreground transition-colors">
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">{formatCurrency(totalValue)}</span>
+          {stageStats && (
+            <div className="flex items-center space-x-1">
+              <Brain className="w-3 h-3 text-primary" />
+              <span className="text-primary">{stageStats.avgProbability}%</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Deal Cards Container */}
+      <SortableContext 
+        id={stage}
+        items={deals.map(d => d.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        <div className="space-y-3 min-h-[200px] flex-1">
+          <DroppableColumn stage={stage}>
+            {deals.map((deal) => (
+              <SortableDealCard 
+                key={deal.id} 
+                deal={deal} 
+                onClick={onCardClick}
+              />
+            ))}
+            {deals.length === 0 && (
+              <div className="h-full w-full border-2 border-dashed border-border/50 rounded-lg flex items-center justify-center text-muted-foreground/50 text-sm min-h-[100px]">
+                Drop here
+              </div>
+            )}
+          </DroppableColumn>
+        </div>
+      </SortableContext>
+    </div>
+  )
+})
+
 const Deals = observer(() => {
   const { dealsStore } = useStore()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [activeDeal, setActiveDeal] = useState<Deal | null>(null)
   const [isAddDealModalOpen, setIsAddDealModalOpen] = useState(false)
+
+  // ... rest of the component code
+
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -231,28 +352,6 @@ const Deals = observer(() => {
     'competitor mentions'
   ]
 
-  const getStageTitle = (stage: DealStage) => {
-    switch (stage) {
-      case 'prospect': return 'Prospect'
-      case 'qualified': return 'Qualified'
-      case 'proposal': return 'Proposal'
-      case 'negotiation': return 'Negotiation'
-      case 'closed-won': return 'Closed Won'
-      case 'closed-lost': return 'Closed Lost'
-    }
-  }
-
-  const getStageColor = (stage: DealStage) => {
-    switch (stage) {
-      case 'prospect': return 'text-slate-600 dark:text-slate-400'
-      case 'qualified': return 'text-blue-600 dark:text-blue-400'
-      case 'proposal': return 'text-yellow-600 dark:text-yellow-400'
-      case 'negotiation': return 'text-orange-600 dark:text-orange-400'
-      case 'closed-won': return 'text-green-600 dark:text-green-400'
-      case 'closed-lost': return 'text-red-600 dark:text-red-400'
-    }
-  }
-
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event
     const deal = active.data.current?.deal as Deal
@@ -261,18 +360,13 @@ const Deals = observer(() => {
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
-    setActiveDeal(null)
-
-    if (!over) return
+    
+    if (!over) {
+      setActiveDeal(null)
+      return
+    }
 
     const dealId = active.id as string
-    // The drop target id should be the stage name (we'll set this up in KanbanColumn)
-    // Or if dropped on another card, we need to find the container
-    
-    // In this simple implementation, we'll make the column itself a droppable zone
-    // but since we are using SortableContext, the 'over' might be another card.
-    // We need to resolve the stage from the over id.
-    
     let targetStage: DealStage | null = null
     
     // Check if over is a stage container
@@ -289,15 +383,25 @@ const Deals = observer(() => {
     if (targetStage) {
       const deal = dealsStore.deals.find(d => d.id === dealId)
       if (deal && deal.stage !== targetStage) {
+        // Initiate the update (optimistic update happens synchronously in the store)
+        const updatePromise = dealsStore.updateDealStage(dealId, targetStage)
+        
+        // Immediately clear the active deal to remove the overlay
+        setActiveDeal(null)
+
         try {
-          await dealsStore.updateDealStage(dealId, targetStage)
+          await updatePromise
+          // Refresh stats after stage change
           await dealsStore.fetchStageStats()
           await dealsStore.fetchForecast()
         } catch (error) {
           console.error('Failed to update deal stage:', error)
         }
+        return
       }
     }
+    
+    setActiveDeal(null)
   }
 
   const handleAddDeal = async (data: {
@@ -363,120 +467,27 @@ const Deals = observer(() => {
     }),
   }
 
-  const KanbanColumn = ({ stage, deals }: { stage: DealStage; deals: Deal[] }) => {
-    const stageStats = Array.isArray(dealsStore.stageStats) 
-      ? dealsStore.stageStats.find(s => s.stage === stage)
-      : undefined
-    const totalValue = deals.reduce((sum, deal) => sum + deal.value, 0)
-
-    // We use the stage as the ID for the droppable container if needed, 
-    // but SortableContext handles the items. 
-    // To make the empty column droppable, we can use a Droppable hook or just rely on the SortableContext 
-    // if we ensure the list is never empty or handle it correctly.
-    // Actually, dnd-kit's SortableContext doesn't automatically make the container droppable for *empty* lists 
-    // unless we also use useDroppable on the container.
-    
-    // However, for simplicity in this refactor, we will rely on the fact that we can drop "near" items.
-    // But to be robust, let's make the column droppable too.
-    // We can just use the SortableContext which provides the strategy.
-    // But we need a useDroppable for the column to handle empty states or dropping "into" the column.
-    
-    // Let's use a simple approach: The column div is a droppable zone.
-    // But wait, we are using SortableContext.
-    // Let's just pass the items to SortableContext.
-    
-    return (
-      <div 
-        className="flex-1 min-w-80 flex flex-col"
-        onClick={(e) => e.stopPropagation()} // Prevent column clicks from triggering background unselect
-      >
-        {/* Column Header */}
-        <div className="bg-card rounded-lg p-4 mb-4 border border-border">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center space-x-2">
-              <h3 className={`font-semibold ${getStageColor(stage)}`}>
-                {getStageTitle(stage)}
-              </h3>
-              <span className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded">
-                {deals.length}
-              </span>
-            </div>
-            <button className="text-muted-foreground hover:text-foreground transition-colors">
-              <Plus className="w-4 h-4" />
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">{formatCurrency(totalValue)}</span>
-            {stageStats && (
-              <div className="flex items-center space-x-1">
-                <Brain className="w-3 h-3 text-primary" />
-                <span className="text-primary">{stageStats.avgProbability}%</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Deal Cards Container */}
-        <SortableContext 
-          id={stage}
-          items={deals.map(d => d.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          <div 
-            className="space-y-3 min-h-[200px] flex-1"
-            // We can make this div a droppable target if we want to support dropping in empty columns explicitly
-            // But dnd-kit's SortableContext usually handles this if we configure it right.
-            // Actually, if the list is empty, we can't drop on an item.
-            // So we should use useDroppable here as well.
-            // But for now, let's see if the 'over' detection works for the container ID (which we set as 'id={stage}' in SortableContext? No, SortableContext id is just for internal use usually).
-            // Actually SortableContext doesn't accept 'id' prop for the container, it accepts 'items'.
-            // The 'id' prop on SortableContext is for the strategy? No.
-            // Let's wrap this div in a Droppable.
-          >
-            <DroppableColumn stage={stage}>
-              {deals.map((deal) => (
-                <SortableDealCard 
-                  key={deal.id} 
-                  deal={deal} 
-                  onClick={handleCardClick}
-                />
-              ))}
-              {deals.length === 0 && (
-                <div className="h-full w-full border-2 border-dashed border-border/50 rounded-lg flex items-center justify-center text-muted-foreground/50 text-sm min-h-[100px]">
-                  Drop here
-                </div>
-              )}
-            </DroppableColumn>
-          </div>
-        </SortableContext>
-      </div>
-    )
+  // Helper functions for stats section
+  const getStageTitle = (stage: DealStage) => {
+    switch (stage) {
+      case 'prospect': return 'Prospect'
+      case 'qualified': return 'Qualified'
+      case 'proposal': return 'Proposal'
+      case 'negotiation': return 'Negotiation'
+      case 'closed-won': return 'Closed Won'
+      case 'closed-lost': return 'Closed Lost'
+    }
   }
 
-  // Helper component to make the column droppable
-  const DroppableColumn = ({ stage, children }: { stage: DealStage, children: React.ReactNode }) => {
-    const { setNodeRef, isOver } = useSortable({
-      id: stage,
-      data: { type: 'Column', stage },
-      disabled: true, // We don't want to drag the column itself
-    })
-    
-    // Note: useSortable with disabled: true acts like useDroppable but shares the context
-    // Actually, better to use useDroppable from @dnd-kit/core to avoid confusion
-    // But we need to import it. Let's just use the useSortable trick or import useDroppable.
-    // I'll stick to useSortable with disabled: true for now as it's already imported, 
-    // OR better, I'll add useDroppable to imports. 
-    // Wait, I didn't import useDroppable. Let's use useSortable with disabled: true, it works as a drop target.
-    
-    return (
-      <div 
-        ref={setNodeRef}
-        className={`h-full transition-colors rounded-lg ${isOver ? 'bg-accent/20' : ''}`}
-      >
-        {children}
-      </div>
-    )
+  const getStageColor = (stage: DealStage) => {
+    switch (stage) {
+      case 'prospect': return 'text-slate-600 dark:text-slate-400'
+      case 'qualified': return 'text-blue-600 dark:text-blue-400'
+      case 'proposal': return 'text-yellow-600 dark:text-yellow-400'
+      case 'negotiation': return 'text-orange-600 dark:text-orange-400'
+      case 'closed-won': return 'text-green-600 dark:text-green-400'
+      case 'closed-lost': return 'text-red-600 dark:text-red-400'
+    }
   }
 
   return (
@@ -576,6 +587,7 @@ const Deals = observer(() => {
                     key={stage}
                     stage={stage}
                     deals={(dealsStore.dealsByStage && dealsStore.dealsByStage[stage]) || []}
+                    onCardClick={handleCardClick}
                   />
                 ))}
               </div>

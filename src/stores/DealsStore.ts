@@ -432,21 +432,41 @@ export class DealsStore extends BaseStore {
   }
 
   async updateDealStage(dealId: string, newStage: DealStage) {
+    const deal = this.deals.find(d => d.id === dealId)
+    if (!deal) return null
+
+    const previousStage = deal.stage
+    
+    // Optimistic update
+    runInAction(() => {
+      deal.stage = newStage
+    })
+
     return this.executeAsync(
       async () => {
-        const deal = await dealsApi.updateDealStage(dealId, newStage)
-        return this.transformDeal(deal)
+        const updatedDeal = await dealsApi.updateDealStage(dealId, newStage)
+        return this.transformDeal(updatedDeal)
       },
       {
-        onSuccess: (deal) => {
+        onSuccess: (updatedDeal) => {
           const index = this.deals.findIndex(d => d.id === dealId)
           if (index !== -1) {
-            this.deals[index] = deal
+            this.deals[index] = updatedDeal
           }
           if (this.selectedDeal?.id === dealId) {
-            this.selectedDeal = deal
+            this.selectedDeal = updatedDeal
           }
         },
+        onError: () => {
+          // Revert on error
+          runInAction(() => {
+            const dealToRevert = this.deals.find(d => d.id === dealId)
+            if (dealToRevert) {
+              dealToRevert.stage = previousStage
+            }
+          })
+        },
+        showLoading: false,
       }
     )
   }
