@@ -17,22 +17,18 @@ export interface ActionItem {
 }
 
 export interface ForecastData {
-  revenue: number
-  period: string
-  confidence: 'high' | 'medium' | 'low'
-  breakdown: Array<{
-    source: string
-    amount: number
-    probability: number
-  }>
+  total_pipeline: number
+  weighted_forecast: number
+  deals_closing_this_month: number
+  monthly_forecast: number
 }
 
 export class DashboardStore extends BaseStore {
   forecastData: ForecastData = {
-    revenue: 0,
-    period: '',
-    confidence: 'low',
-    breakdown: []
+    total_pipeline: 0,
+    weighted_forecast: 0,
+    deals_closing_this_month: 0,
+    monthly_forecast: 0
   }
 
   actionItems: ActionItem[] = []
@@ -84,9 +80,81 @@ export class DashboardStore extends BaseStore {
       {
         onSuccess: (forecast) => {
           this.forecastData = forecast
+          this.generateForecastActionItems(forecast)
         },
       }
     )
+  }
+
+  private generateForecastActionItems(forecast: ForecastData) {
+    const forecastActionItems: ActionItem[] = []
+
+    // Check if there are deals closing this month
+    if (forecast.deals_closing_this_month > 0) {
+      forecastActionItems.push({
+        id: 'forecast-deals-closing',
+        icon: 'target',
+        title: `${forecast.deals_closing_this_month} deal${forecast.deals_closing_this_month > 1 ? 's' : ''} closing this month. Total forecast: $${(forecast.monthly_forecast / 1000).toFixed(1)}K`,
+        type: 'opportunity',
+        timestamp: new Date(),
+        actions: [
+          { label: 'View Deals', type: 'primary' },
+          { label: 'Dismiss', type: 'dismiss' }
+        ]
+      })
+    }
+
+    // Check pipeline health
+    const pipelineRatio = forecast.total_pipeline / forecast.monthly_forecast
+    if (pipelineRatio < 2) {
+      forecastActionItems.push({
+        id: 'forecast-low-pipeline',
+        icon: 'alert-triangle',
+        title: `Pipeline is only ${pipelineRatio.toFixed(1)}x your monthly forecast ($${(forecast.total_pipeline / 1000).toFixed(1)}K). Consider generating more opportunities.`,
+        type: 'warning',
+        timestamp: new Date(),
+        actions: [
+          { label: 'Add Deal', type: 'primary' },
+          { label: 'Dismiss', type: 'dismiss' }
+        ]
+      })
+    }
+
+    // Strong pipeline indicator
+    if (pipelineRatio >= 3 && forecast.deals_closing_this_month >= 2) {
+      forecastActionItems.push({
+        id: 'forecast-strong-pipeline',
+        icon: 'trending-up',
+        title: `Strong pipeline! ${pipelineRatio.toFixed(1)}x coverage with $${(forecast.total_pipeline / 1000).toFixed(1)}K in opportunities.`,
+        type: 'success',
+        timestamp: new Date(),
+        actions: [
+          { label: 'View Pipeline', type: 'primary' },
+          { label: 'Dismiss', type: 'dismiss' }
+        ]
+      })
+    }
+
+    // Low deals closing warning
+    if (forecast.deals_closing_this_month === 0) {
+      forecastActionItems.push({
+        id: 'forecast-no-deals',
+        icon: 'alert-triangle',
+        title: 'No deals expected to close this month. Review your pipeline and move deals forward.',
+        type: 'warning',
+        timestamp: new Date(),
+        actions: [
+          { label: 'Review Pipeline', type: 'primary' },
+          { label: 'Dismiss', type: 'dismiss' }
+        ]
+      })
+    }
+
+    // Merge with existing action items, removing old forecast items
+    this.actionItems = [
+      ...forecastActionItems,
+      ...this.actionItems.filter(item => !item.id.startsWith('forecast-'))
+    ]
   }
 
   async fetchActionItems() {

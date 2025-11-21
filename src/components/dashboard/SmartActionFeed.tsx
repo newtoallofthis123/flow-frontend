@@ -1,9 +1,14 @@
-import { Lightbulb, Target, AlertTriangle } from 'lucide-react'
+import { Lightbulb, Target, AlertTriangle, TrendingUp, DollarSign } from 'lucide-react'
 import { observer } from 'mobx-react-lite'
 import { useStore } from '../../stores'
+import { useEffect } from 'react'
 
 const SmartActionFeed = observer(() => {
   const { dashboardStore } = useStore()
+
+  useEffect(() => {
+    dashboardStore.initialize()
+  }, [dashboardStore])
 
   const getIcon = (iconName: string) => {
     switch (iconName) {
@@ -13,6 +18,10 @@ const SmartActionFeed = observer(() => {
         return Target
       case 'alert-triangle':
         return AlertTriangle
+      case 'trending-up':
+        return TrendingUp
+      case 'dollar-sign':
+        return DollarSign
       default:
         return Lightbulb
     }
@@ -24,6 +33,8 @@ const SmartActionFeed = observer(() => {
         return 'border-l-blue-500 dark:border-l-blue-400 bg-blue-100/30 dark:bg-blue-900/10'
       case 'warning':
         return 'border-l-yellow-500 dark:border-l-yellow-400 bg-yellow-100/30 dark:bg-yellow-900/10'
+      case 'success':
+        return 'border-l-green-500 dark:border-l-green-400 bg-green-100/30 dark:bg-green-900/10'
       default:
         return 'border-l-green-500 dark:border-l-green-400 bg-green-100/30 dark:bg-green-900/10'
     }
@@ -35,6 +46,8 @@ const SmartActionFeed = observer(() => {
         return 'text-blue-600 dark:text-blue-400'
       case 'warning':
         return 'text-yellow-600 dark:text-yellow-400'
+      case 'success':
+        return 'text-green-600 dark:text-green-400'
       default:
         return 'text-green-600 dark:text-green-400'
     }
