@@ -1,4 +1,5 @@
 import { observer } from 'mobx-react-lite'
+import { useEffect } from 'react'
 import { useStore } from '../stores'
 import MainLayout from '../components/layout/MainLayout'
 import SearchBar from '../components/ui/SearchBar'
@@ -16,6 +17,13 @@ const Messages = observer(() => {
   const selectedConversation = id
     ? messagesStore.conversations.find(c => c.id === id)
     : null
+
+  // Auto-select the first conversation when none is in URL
+  useEffect(() => {
+    if (id || messagesStore.conversations.length === 0) return
+    const target = messagesStore.conversations[0]
+    if (target) navigate(`/messages/${target.id}`, { replace: true })
+  }, [id, messagesStore.conversations.length, navigate])
 
   // Helper to get contact name/company, with fallback
   const getContactInfo = (contactId: string) => {
@@ -212,8 +220,8 @@ const Messages = observer(() => {
               <div className="p-6 border-b border-border bg-card/30">
                 <div className="flex items-start justify-between gap-6">
                   <div className="flex items-center gap-4 min-w-0 flex-1">
-                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <span className="text-primary-foreground font-bold text-lg">
+                    <div className="w-14 h-14 bg-secondary rounded-xl flex items-center justify-center flex-shrink-0 border border-border">
+                      <span className="text-foreground font-semibold text-lg">
                         {((selectedConversation.contactName || getContactInfo(selectedConversation.contactId).name) || '?').charAt(0).toUpperCase()}
                       </span>
                     </div>

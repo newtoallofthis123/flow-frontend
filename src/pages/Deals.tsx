@@ -57,8 +57,8 @@ const DealCardContent = observer(({ deal, isOverlay = false }: { deal: Deal; isO
     <Card
       interactive
       className={`p-4 transition-all ${
-        id === deal.id && !isOverlay ? 'ring-2 ring-primary' : ''
-      } ${isOverlay ? 'shadow-2xl scale-105 cursor-grabbing' : 'cursor-grab'}`}
+        id === deal.id && !isOverlay ? 'bg-accent shadow-sm' : ''
+      } ${isOverlay ? 'shadow-2xl cursor-grabbing' : 'cursor-grab'}`}
     >
       {/* Deal Header */}
       <div className="flex items-start justify-between mb-3">

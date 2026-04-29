@@ -50,7 +50,9 @@ _(none planned; backend fix is delegated as Section D, not orchestrator-handled)
 
 ## Firefight log
 
-_(none yet)_
+- **Purple gradient avatars** on Contacts header and Messages header → replaced `bg-gradient-to-br from-blue-500 to-purple-500` with `bg-secondary` + bordered, neutral initial.
+- **Deal card "weird overlap" / ring artifacts** → the selected-deal `ring-2 ring-primary` + `scale-105` (DragOverlay) created visible curved corners. Replaced selection state with `bg-accent shadow-sm`; dropped `scale-105` from the DragOverlay.
+- **"By default I see nothing" on Calendar / Contacts / Messages** → added auto-select effects: Calendar picks today → upcoming → most-recent-past; Contacts picks first; Messages picks first. All use `navigate(..., { replace: true })` so back-button isn't polluted.
 
 ## Notes
 

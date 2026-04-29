@@ -374,13 +374,34 @@ export class CalendarStore extends BaseStore {
       },
       {
         onSuccess: (event) => {
-          this.selectedEvent = event
+          // Preserve existing preparation/aiInsights — fetchPreparation populates
+          // these separately, and the bare event endpoint returns empty defaults
+          // that would otherwise clobber freshly-fetched prep data.
+          const existing = this.events.find(e => e.id === id)
+          const merged: CalendarEvent = {
+            ...event,
+            preparation: this.hasPreparationContent(existing?.preparation) ? existing!.preparation : event.preparation,
+            aiInsights: existing?.aiInsights?.length ? existing.aiInsights : event.aiInsights,
+          }
+          this.selectedEvent = merged
           const index = this.events.findIndex(e => e.id === id)
           if (index !== -1) {
-            this.events[index] = event
+            this.events[index] = merged
           }
         },
       }
+    )
+  }
+
+  private hasPreparationContent(prep?: MeetingPreparation): boolean {
+    if (!prep) return false
+    return (
+      (prep.suggestedTalkingPoints?.length ?? 0) > 0 ||
+      (prep.recentInteractions?.length ?? 0) > 0 ||
+      !!prep.dealContext ||
+      (prep.competitorIntel?.length ?? 0) > 0 ||
+      (prep.personalNotes?.length ?? 0) > 0 ||
+      (prep.documentsToShare?.length ?? 0) > 0
     )
   }
 

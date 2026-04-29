@@ -30,6 +30,13 @@ const Contacts = observer(() => {
     }
   }, [id, contactsStore])
 
+  // Auto-select the first contact when none is in URL
+  useEffect(() => {
+    if (id || contactsStore.contacts.length === 0) return
+    const target = contactsStore.contacts[0]
+    if (target) navigate(`/contacts/${target.id}`, { replace: true })
+  }, [id, contactsStore.contacts.length, navigate])
+
   const selectedContact = id
     ? contactsStore.contacts.find(c => c.id === id) || contactsStore.selectedContact
     : null
@@ -264,8 +271,8 @@ const Contacts = observer(() => {
               <div className="p-6 border-b border-border bg-card/30">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-start space-x-4">
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
-                      <span className="text-primary-foreground font-bold text-lg">
+                    <div className="w-16 h-16 bg-secondary rounded-lg flex items-center justify-center border border-border">
+                      <span className="text-foreground font-semibold text-xl">
                         {selectedContact.name.charAt(0)}
                       </span>
                     </div>

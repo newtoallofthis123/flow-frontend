@@ -38,6 +38,21 @@ const Calendar = observer(() => {
     }
   }, [id, calendarStore])
 
+  // Auto-select an event when no ID is in URL: prefer today, then upcoming, then most recent past
+  useEffect(() => {
+    if (id || calendarStore.events.length === 0) return
+    const now = Date.now()
+    const today = calendarStore.todayEvents[0]
+    const upcoming = calendarStore.events
+      .filter(e => e.startTime.getTime() >= now)
+      .sort((a, b) => a.startTime.getTime() - b.startTime.getTime())[0]
+    const recent = calendarStore.events
+      .slice()
+      .sort((a, b) => b.startTime.getTime() - a.startTime.getTime())[0]
+    const target = today || upcoming || recent
+    if (target) navigate(`/calendar/${target.id}`, { replace: true })
+  }, [id, calendarStore.events.length, navigate])
+
   // Resolve contact information from contacts store if not in event
   const selectedEvent = id
     ? (calendarStore.events.find(e => e.id === id) || calendarStore.selectedEvent)
