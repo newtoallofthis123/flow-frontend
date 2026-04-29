@@ -246,16 +246,16 @@ ${stats.length > 0 ? stats.map(s => `  - ${s.stage}: ${s.count} deals, $${(s.tot
     }
 
     if (path.startsWith('/dashboard')) {
-      const forecast = dashboardStore.forecastData
+      const forecast = dashboardStore.forecastData as unknown as Record<string, unknown> | undefined
       const summary = dashboardStore.summary
       const actionItems = dashboardStore.actionItems || []
-      const forecastRevenue = (forecast?.revenue ?? 0)
-      const forecastPeriod = forecast?.period || 'N/A'
+      const forecastRevenue = Number(forecast?.revenue ?? forecast?.weighted_forecast ?? 0)
+      const forecastPeriod = (forecast?.period as string) || 'N/A'
       const totalDealsValue = (summary?.totalDealsValue ?? 0)
-      
+
       return `You are viewing the dashboard:
 - Forecast Revenue: $${forecastRevenue.toLocaleString()} (${forecastPeriod})
-- Forecast Confidence: ${forecast?.confidence || 'N/A'}
+- Forecast Confidence: ${(forecast?.confidence as string) || 'N/A'}
 - Total Deals Value: $${totalDealsValue.toLocaleString()}
 - High Probability Deals: ${summary?.highProbabilityDeals ?? 0}
 - At Risk Contacts: ${summary?.atRiskContacts ?? 0}

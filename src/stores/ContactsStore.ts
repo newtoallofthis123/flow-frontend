@@ -349,7 +349,11 @@ export class ContactsStore extends BaseStore {
   ) {
     return this.executeAsync(
       async () => {
-        const event = await contactsApi.addCommunication(contactId, data)
+        const event = await contactsApi.addCommunication(contactId, {
+          subject: data.subject ?? '',
+          summary: data.summary,
+          occurred_at: data.date.toISOString(),
+        })
         return event
       },
       {

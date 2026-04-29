@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
-import { ArrowLeft, Users, Briefcase, Calendar, Loader2, Search, Mail, Phone, Building2, TrendingUp, TrendingDown, Heart } from 'lucide-react'
-import { searchApi, type NaturalLanguageSearchResponse, type SearchContact } from '../api/search.api'
-import LoadingSpinner from '../components/ui/LoadingSpinner'
+import { ArrowLeft, Users, Briefcase, Calendar, Loader2, Search, Mail, Phone, Building2 } from 'lucide-react'
+import { searchApi, type NaturalLanguageSearchResponse } from '../api/search.api'
 import HealthScore from '../components/ui/HealthScore'
 import SentimentIndicator from '../components/ui/SentimentIndicator'
 import MainLayout from '../components/layout/MainLayout'
@@ -52,15 +51,15 @@ const SearchResults = observer(() => {
   const filteredDeals = activeTab === 'all' || activeTab === 'deals' ? results?.deals || [] : []
   const filteredEvents = activeTab === 'all' || activeTab === 'events' ? results?.events || [] : []
 
-  const handleContactClick = (contactId: string) => {
+  const handleContactClick = (_contactId: string) => {
     navigate('/contacts')
   }
 
-  const handleDealClick = (dealId: string) => {
+  const handleDealClick = (_dealId: string) => {
     navigate('/deals')
   }
 
-  const handleEventClick = (eventId: string) => {
+  const handleEventClick = (_eventId: string) => {
     navigate('/calendar')
   }
 

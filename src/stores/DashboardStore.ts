@@ -126,7 +126,7 @@ export class DashboardStore extends BaseStore {
         id: 'forecast-strong-pipeline',
         icon: 'trending-up',
         title: `Strong pipeline! ${pipelineRatio.toFixed(1)}x coverage with $${(forecast.total_pipeline / 1000).toFixed(1)}K in opportunities.`,
-        type: 'success',
+        type: 'opportunity',
         timestamp: new Date(),
         actions: [
           { label: 'View Pipeline', type: 'primary' },
