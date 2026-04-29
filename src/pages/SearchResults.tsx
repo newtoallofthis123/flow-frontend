@@ -6,13 +6,14 @@ import { searchApi, type NaturalLanguageSearchResponse, type SearchContact } fro
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import HealthScore from '../components/ui/HealthScore'
 import SentimentIndicator from '../components/ui/SentimentIndicator'
+import MainLayout from '../components/layout/MainLayout'
 
 const SearchResults = observer(() => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const query = searchParams.get('q') || ''
 
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [results, setResults] = useState<NaturalLanguageSearchResponse | null>(null)
   const [activeTab, setActiveTab] = useState<'all' | 'contacts' | 'deals' | 'events'>('all')
 
@@ -65,18 +66,34 @@ const SearchResults = observer(() => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-background">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-lg text-foreground">Searching...</p>
-          <p className="text-sm text-muted-foreground mt-2">"{query}"</p>
+      <MainLayout>
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-lg text-foreground">Searching...</p>
+            <p className="text-sm text-muted-foreground mt-2">"{query}"</p>
+          </div>
         </div>
-      </div>
+      </MainLayout>
+    )
+  }
+
+  if (!query) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <Search className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-foreground mb-2">Search Flow</h2>
+            <p className="text-muted-foreground">Enter a query in the header to search contacts, deals, and events.</p>
+          </div>
+        </div>
+      </MainLayout>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <MainLayout>
       {/* Header */}
       <div className="sticky top-0 z-10 bg-card border-b border-border backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
@@ -394,7 +411,7 @@ const SearchResults = observer(() => {
           </div>
         )}
       </div>
-    </div>
+    </MainLayout>
   )
 })
 

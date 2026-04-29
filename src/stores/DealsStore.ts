@@ -507,7 +507,13 @@ export class DealsStore extends BaseStore {
       },
       {
         onSuccess: (forecast) => {
-          this.forecastData = forecast
+          const f = forecast as any
+          this.forecastData = {
+            totalPipeline: f.totalPipeline ?? f.total_pipeline ?? 0,
+            weightedForecast: f.weightedForecast ?? f.weighted_forecast ?? 0,
+            dealsClosingThisMonth: f.dealsClosingThisMonth ?? f.deals_closing_this_month ?? 0,
+            monthlyForecast: f.monthlyForecast ?? f.monthly_forecast ?? 0,
+          }
         },
         showLoading: false,
       }

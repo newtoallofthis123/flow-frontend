@@ -9,8 +9,11 @@ import AIInsight from '../components/ui/AIInsight'
 import AddCommunicationModal from '../components/ui/AddCommunicationModal'
 import AddContactModal from '../components/ui/AddContactModal'
 import { contactsApi } from '../api/contacts.api'
-import { Phone, Mail, Building, Calendar, MessageSquare, DollarSign, Tag, Clock, TrendingUp, User, Plus, Trash2 } from 'lucide-react'
+import { Phone, Mail, Building, Calendar, MessageSquare, DollarSign, Tag, Clock, TrendingUp, User, Plus, Trash2, Star, AlertTriangle } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { Card } from '../components/ui/Card'
+import { Chip } from '../components/ui/Chip'
+import { FilterButton } from '../components/ui/FilterButton'
 
 const Contacts = observer(() => {
   const { contactsStore } = useStore()
@@ -164,7 +167,7 @@ const Contacts = observer(() => {
               value={contactsStore.searchQuery}
               onChange={contactsStore.setSearchQuery}
               placeholder="Search contacts, companies..."
-              showAI={true}
+              showAI={false}
               showFilter={true}
               filters={searchFilters}
               selectedFilter={contactsStore.filterBy}
@@ -174,17 +177,25 @@ const Contacts = observer(() => {
             />
           </div>
 
-          {/* Stats Cards */}
+          {/* Stats Filters */}
           <div className="p-4 border-b border-border">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-card rounded-lg p-3">
-                <div className="text-xs text-muted-foreground mb-1">High Value</div>
-                <div className="text-lg font-bold text-green-600 dark:text-green-400">{contactsStore.contactStats.highValue}</div>
-              </div>
-              <div className="bg-card rounded-lg p-3">
-                <div className="text-xs text-muted-foreground mb-1">At Risk</div>
-                <div className="text-lg font-bold text-red-600 dark:text-red-400">{contactsStore.contactStats.atRisk}</div>
-              </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <FilterButton
+                icon={Star}
+                active={contactsStore.filterBy === 'high-value'}
+                count={contactsStore.contactStats.highValue}
+                onClick={() => contactsStore.setFilter('high-value' as typeof contactsStore.filterBy)}
+              >
+                High Value
+              </FilterButton>
+              <FilterButton
+                icon={AlertTriangle}
+                active={contactsStore.filterBy === 'at-risk'}
+                count={contactsStore.contactStats.atRisk}
+                onClick={() => contactsStore.setFilter('at-risk' as typeof contactsStore.filterBy)}
+              >
+                At Risk
+              </FilterButton>
             </div>
           </div>
 
@@ -192,14 +203,11 @@ const Contacts = observer(() => {
           <div className="flex-1 overflow-y-auto">
             <div className="p-4 space-y-3">
               {contactsStore.filteredContacts.map((contact) => (
-                <div
+                <Card
                   key={contact.id}
+                  interactive
                   onClick={() => navigate(`/contacts/${contact.id}`)}
-                  className={`p-4 rounded-lg border cursor-pointer transition-all ${
-                    id === contact.id
-                      ? 'bg-accent border-primary'
-                      : 'bg-card border-border hover:bg-accent dark:hover:bg-accent/50'
-                  }`}
+                  className={`p-4 ${id === contact.id ? 'ring-2 ring-primary' : ''}`}
                 >
                   {/* Contact Header */}
                   <div className="flex items-start justify-between mb-3">
@@ -227,9 +235,7 @@ const Contacts = observer(() => {
                       </div>
                     </div>
                     {contact.churnRisk > 60 && (
-                      <div className="px-2 py-1 bg-red-100/50 dark:bg-red-900/20 border border-red-300/50 dark:border-red-700/30 rounded text-red-600 dark:text-red-400 text-xs">
-                        At Risk
-                      </div>
+                      <Chip variant="danger" size="sm">At Risk</Chip>
                     )}
                   </div>
 
@@ -237,18 +243,14 @@ const Contacts = observer(() => {
                   {contact.tags && contact.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">
                       {contact.tags.slice(0, 2).map((tag) => (
-                        <span key={tag} className="px-2 py-0.5 bg-secondary text-secondary-foreground text-xs rounded">
-                          {tag}
-                        </span>
+                        <Chip key={tag} size="sm">{tag}</Chip>
                       ))}
                       {contact.tags.length > 2 && (
-                        <span className="px-2 py-0.5 bg-secondary text-muted-foreground text-xs rounded">
-                          +{contact.tags.length - 2}
-                        </span>
+                        <Chip size="sm">+{contact.tags.length - 2}</Chip>
                       )}
                     </div>
                   )}
-                </div>
+                </Card>
               ))}
             </div>
           </div>
@@ -286,7 +288,7 @@ const Contacts = observer(() => {
                       variant="circular"
                     />
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(selectedContact.totalValue)}</div>
+                      <div className="text-2xl font-bold text-foreground">{formatCurrency(selectedContact.totalValue)}</div>
                       <div className="text-sm text-muted-foreground">{selectedContact.totalDeals} deals</div>
                     </div>
                   </div>
@@ -322,7 +324,7 @@ const Contacts = observer(() => {
                   <div className="h-6 w-px bg-border mx-1" />
                   <button
                     onClick={() => setShowDeleteConfirm(true)}
-                    className="flex cursor-pointer items-center space-x-2 px-4 py-2 bg-red-100/50 dark:bg-red-900/20 hover:bg-red-200/50 dark:hover:bg-red-900/30 border border-red-300/50 dark:border-red-700/30 rounded-lg text-red-600 dark:text-red-400 transition-colors"
+                    className="flex cursor-pointer items-center space-x-2 px-4 py-2 bg-destructive/10 hover:bg-destructive/20 border border-destructive/30 rounded-lg text-destructive transition-colors"
                     aria-label="Delete contact"
                     title="Delete contact"
                   >
@@ -337,7 +339,7 @@ const Contacts = observer(() => {
                   {/* Main Content */}
                   <div className="col-span-2 space-y-6">
                     {/* Communication Timeline */}
-                    <div className="bg-card rounded-lg p-6 border border-border">
+                    <Card className="p-6">
                       <h3 className="text-lg font-semibold text-card-foreground mb-4 flex items-center space-x-2">
                         <MessageSquare className="w-5 h-5" />
                         <span>Communication Timeline</span>
@@ -351,9 +353,9 @@ const Contacts = observer(() => {
                           <div key={event.id} className="flex space-x-4">
                             <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center flex-shrink-0">
                               {event.type === 'email' && <Mail className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
-                              {event.type === 'call' && <Phone className="w-5 h-5 text-green-600 dark:text-green-400" />}
+                              {event.type === 'call' && <Phone className="w-5 h-5 text-success" />}
                               {event.type === 'meeting' && <Calendar className="w-5 h-5 text-purple-600 dark:text-purple-400" />}
-                              {event.type === 'note' && <MessageSquare className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />}
+                              {event.type === 'note' && <MessageSquare className="w-5 h-5 text-warning" />}
                             </div>
                             <div className="flex-1">
                               <div className="flex items-center justify-between mb-2">
@@ -384,13 +386,13 @@ const Contacts = observer(() => {
                           </div>
                         ))}
                       </div>
-                    </div>
+                    </Card>
                   </div>
 
                   {/* Sidebar */}
                   <div className="space-y-6">
                     {/* Contact Details */}
-                    <div className="bg-card rounded-lg p-4 border border-border">
+                    <Card className="p-4">
                       <h4 className="font-semibold text-card-foreground mb-3">Contact Details</h4>
                       <div className="space-y-3 text-sm">
                         <div className="flex items-center space-x-2 text-muted-foreground">
@@ -406,24 +408,24 @@ const Contacts = observer(() => {
                           <span>{selectedContact.company}</span>
                         </div>
                       </div>
-                    </div>
+                    </Card>
 
                     {/* Tags */}
-                    <div className="bg-card rounded-lg p-4 border border-border">
+                    <Card className="p-4">
                       <h4 className="font-semibold text-card-foreground mb-3">Tags</h4>
                       <div className="flex flex-wrap gap-2">
                         {(selectedContact.tags || []).map((tag) => (
-                          <span key={tag} className="flex items-center space-x-1 px-2 py-1 bg-secondary text-secondary-foreground text-sm rounded">
+                          <Chip key={tag} size="md">
                             <Tag className="w-3 h-3" />
                             <span>{tag}</span>
-                          </span>
+                          </Chip>
                         ))}
                       </div>
-                    </div>
+                    </Card>
 
                     {/* AI Insights */}
                     {(selectedContact.aiInsights && selectedContact.aiInsights.length > 0) ? (
-                      <div className="bg-card rounded-lg p-4 border border-border">
+                      <Card className="p-4">
                         <h4 className="font-semibold text-card-foreground mb-3">AI Insights</h4>
                         <div className="space-y-4">
                           {selectedContact.aiInsights
@@ -443,12 +445,12 @@ const Contacts = observer(() => {
                             />
                           ))}
                         </div>
-                      </div>
+                      </Card>
                     ) : (
-                      <div className="bg-card rounded-lg p-4 border border-border">
+                      <Card className="p-4">
                         <h4 className="font-semibold text-card-foreground mb-3">AI Insights</h4>
                         <p className="text-sm text-muted-foreground">No AI insights available yet.</p>
-                      </div>
+                      </Card>
                     )}
                   </div>
                 </div>
@@ -500,7 +502,7 @@ const Contacts = observer(() => {
               </button>
               <button
                 onClick={handleDeleteContact}
-                className="px-4 py-2 bg-red-100/50 dark:bg-red-900/20 hover:bg-red-200/50 dark:hover:bg-red-900/30 border border-red-300/50 dark:border-red-700/30 rounded-lg text-red-600 dark:text-red-400 transition-colors"
+                className="px-4 py-2 bg-destructive hover:bg-destructive/90 rounded-lg text-destructive-foreground transition-colors"
               >
                 Delete
               </button>

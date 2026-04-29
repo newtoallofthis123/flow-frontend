@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
-import { Brain, ChevronLeft, ChevronRight, Bot, User, Send, Loader2 } from 'lucide-react'
+import { Brain, ChevronRight, Bot, User, Send, Loader2 } from 'lucide-react'
 import { observer } from 'mobx-react-lite'
 import { useStore } from '../../stores'
 import { llmApi } from '../../api'
@@ -362,18 +362,13 @@ ${stats.length > 0 ? stats.map(s => `  - ${s.stage}: ${s.count} deals, $${(s.tot
 
   if (uiStore.aiCopilotCollapsed) {
     return (
-      <div className="relative w-16 bg-sidebar border-l border-sidebar-border flex flex-col">
-        <button
-          onClick={() => uiStore.toggleAICopilot()}
-          className="absolute -left-3 top-6 w-6 h-6 bg-sidebar border border-sidebar-border rounded-full flex items-center justify-center hover:bg-sidebar-accent transition-colors z-10 shadow-sm"
-          aria-label="Expand AI Copilot"
-        >
-          <ChevronLeft className="w-4 h-4 text-sidebar-foreground" />
-        </button>
-        <div className="p-6 flex flex-col items-center">
-          <Brain className="w-6 h-6 text-primary mb-4" />
-        </div>
-      </div>
+      <button
+        onClick={() => uiStore.toggleAICopilot()}
+        className="fixed bottom-6 right-6 w-12 h-12 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full flex items-center justify-center shadow-lg transition-colors z-40"
+        aria-label="Expand AI Copilot"
+      >
+        <Brain className="w-5 h-5" />
+      </button>
     )
   }
 

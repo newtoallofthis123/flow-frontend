@@ -5,6 +5,8 @@ import SearchBar from '../components/ui/SearchBar'
 import SentimentIndicator from '../components/ui/SentimentIndicator'
 import { MessageSquare, Send, Phone, Mail, Calendar, Building, User, Brain, Lightbulb, Zap, Clock, Paperclip, TrendingUp, TrendingDown, Minus, Smile } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { Card } from '../components/ui/Card'
+import { Chip } from '../components/ui/Chip'
 
 const Messages = observer(() => {
   const { messagesStore, contactsStore } = useStore()
@@ -35,12 +37,14 @@ const Messages = observer(() => {
     return date.toLocaleDateString()
   }
 
-  const formatTime = (date: Date) => {
+  const formatTime = (date: Date | string | undefined | null) => {
+    const d = date instanceof Date ? date : date ? new Date(date) : null
+    if (!d || isNaN(d.getTime())) return ''
     return new Intl.DateTimeFormat('en-US', {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true
-    }).format(date)
+    }).format(d)
   }
 
   const searchFilters = [
@@ -63,24 +67,23 @@ const Messages = observer(() => {
     }
   }
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityChip = (priority: string) => {
     switch (priority) {
       case 'high':
-        return 'border-l-red-600 dark:border-l-red-400'
+        return <Chip variant="danger" size="sm">Urgent</Chip>
       case 'medium':
-        return 'border-l-yellow-600 dark:border-l-yellow-400'
-      case 'low':
+        return <Chip variant="warning" size="sm">Hot Lead</Chip>
       default:
-        return 'border-l-blue-600 dark:border-l-blue-400'
+        return null
     }
   }
 
   const getSentimentTrendIcon = (trend: string) => {
     switch (trend) {
       case 'improving':
-        return <TrendingUp className="w-3 h-3 text-green-600 dark:text-green-400" />
+        return <TrendingUp className="w-3 h-3 text-success" />
       case 'declining':
-        return <TrendingDown className="w-3 h-3 text-red-600 dark:text-red-400" />
+        return <TrendingDown className="w-3 h-3 text-destructive" />
       case 'stable':
       default:
         return <Minus className="w-3 h-3 text-muted-foreground" />
@@ -106,7 +109,7 @@ const Messages = observer(() => {
               value={messagesStore.searchQuery}
               onChange={messagesStore.setSearchQuery}
               placeholder="Search conversations, contacts..."
-              showAI={true}
+              showAI={false}
               showFilter={true}
               filters={searchFilters}
               selectedFilter={messagesStore.filterBy}
@@ -120,18 +123,18 @@ const Messages = observer(() => {
           <div className="p-4 border-b border-border bg-card/30">
             <h3 className="text-sm font-semibold text-foreground mb-3">Overall Sentiment</h3>
             <div className="grid grid-cols-3 gap-2">
-              <div className="bg-green-100 dark:bg-green-900/20 border border-green-300/50 dark:border-green-700/30 rounded p-2 text-center">
-                <div className="text-green-600 dark:text-green-400 font-bold">{Math.round(messagesStore.sentimentOverview.positive)}%</div>
-                <div className="text-xs text-muted-foreground">Positive</div>
-              </div>
-              <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-300/50 dark:border-yellow-700/30 rounded p-2 text-center">
-                <div className="text-yellow-600 dark:text-yellow-400 font-bold">{Math.round(messagesStore.sentimentOverview.neutral)}%</div>
-                <div className="text-xs text-muted-foreground">Neutral</div>
-              </div>
-              <div className="bg-red-100 dark:bg-red-900/20 border border-red-300/50 dark:border-red-700/30 rounded p-2 text-center">
-                <div className="text-red-600 dark:text-red-400 font-bold">{Math.round(messagesStore.sentimentOverview.negative)}%</div>
-                <div className="text-xs text-muted-foreground">Negative</div>
-              </div>
+              <Card className="p-3 text-center">
+                <div className="text-lg font-bold text-foreground mb-1">{Math.round(messagesStore.sentimentOverview.positive)}%</div>
+                <Chip variant="success" size="sm">Positive</Chip>
+              </Card>
+              <Card className="p-3 text-center">
+                <div className="text-lg font-bold text-foreground mb-1">{Math.round(messagesStore.sentimentOverview.neutral)}%</div>
+                <Chip variant="warning" size="sm">Neutral</Chip>
+              </Card>
+              <Card className="p-3 text-center">
+                <div className="text-lg font-bold text-foreground mb-1">{Math.round(messagesStore.sentimentOverview.negative)}%</div>
+                <Chip variant="danger" size="sm">Negative</Chip>
+              </Card>
             </div>
           </div>
 
@@ -139,41 +142,39 @@ const Messages = observer(() => {
           <div className="flex-1 overflow-y-auto">
             <div className="p-4 space-y-2">
               {messagesStore.filteredConversations.map((conversation) => (
-                <div
+                <Card
                   key={conversation.id}
+                  interactive
                   onClick={() => navigate(`/messages/${conversation.id}`)}
-                  className={`p-4 rounded-lg border-l-4 cursor-pointer transition-all ${getPriorityColor(conversation.priority)} ${
-                    id === conversation.id
-                      ? 'bg-accent border-primary border border-l-4'
-                      : 'bg-card border-border hover:bg-accent dark:hover:bg-accent/50 border border-l-4'
-                  }`}
+                  className={`p-4 ${id === conversation.id ? 'ring-2 ring-primary' : ''}`}
                 >
                   {/* Conversation Header */}
                   <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <h3 className="text-sm font-semibold text-card-foreground truncate">
-                          {conversation.contactName || getContactInfo(conversation.contactId).name}
-                        </h3>
-                        {conversation.unreadCount > 0 && (
-                          <span className="px-2 py-0.5 bg-primary text-primary-foreground text-xs rounded-full">
-                            {conversation.unreadCount}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center space-x-1 text-xs text-muted-foreground/70">
-                        <Building className="w-3 h-3" />
-                        <span className="truncate">
-                          {conversation.contactCompany || getContactInfo(conversation.contactId).company}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2 ml-2">
+                    <div className="flex items-start space-x-2 flex-1 min-w-0">
                       <SentimentIndicator
                         sentiment={conversation.overallSentiment}
                         size="sm"
                         variant="minimal"
                       />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <h3 className="text-sm font-semibold text-card-foreground truncate">
+                            {conversation.contactName || getContactInfo(conversation.contactId).name}
+                          </h3>
+                          {conversation.unreadCount > 0 && (
+                            <Chip variant="info" size="sm">{conversation.unreadCount}</Chip>
+                          )}
+                          {getPriorityChip(conversation.priority)}
+                        </div>
+                        <div className="flex items-center space-x-1 text-xs text-muted-foreground/70">
+                          <Building className="w-3 h-3" />
+                          <span className="truncate">
+                            {conversation.contactCompany || getContactInfo(conversation.contactId).company}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2 ml-2">
                       <div className="flex items-center">
                         {getSentimentTrendIcon(conversation.sentimentTrend)}
                       </div>
@@ -190,18 +191,14 @@ const Messages = observer(() => {
                   {conversation.tags && conversation.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1">
                       {conversation.tags.slice(0, 3).map((tag) => (
-                        <span key={tag} className="px-2 py-0.5 bg-secondary text-secondary-foreground text-xs rounded">
-                          {tag}
-                        </span>
+                        <Chip key={tag} size="sm">{tag}</Chip>
                       ))}
                       {conversation.tags.length > 3 && (
-                        <span className="px-2 py-0.5 bg-secondary text-muted-foreground text-xs rounded">
-                          +{conversation.tags.length - 3}
-                        </span>
+                        <Chip size="sm">+{conversation.tags.length - 3}</Chip>
                       )}
                     </div>
                   )}
-                </div>
+                </Card>
               ))}
             </div>
           </div>
@@ -294,9 +291,9 @@ const Messages = observer(() => {
                         </div>
 
                         {/* Message Body */}
-                        <div className="bg-card rounded-lg p-4 mb-3 border border-border">
+                        <Card className="p-4 mb-3">
                           <p className="text-card-foreground leading-relaxed">{message.content}</p>
-                        </div>
+                        </Card>
 
                         {/* AI Analysis */}
                         {message.aiAnalysis && (
@@ -317,9 +314,9 @@ const Messages = observer(() => {
                                   <div>
                                     <span className="text-xs text-muted-foreground uppercase tracking-wide">Urgency Level</span>
                                     <p className={`text-sm font-medium capitalize ${
-                                      message.aiAnalysis.urgencyLevel === 'high' ? 'text-red-600 dark:text-red-400' :
-                                      message.aiAnalysis.urgencyLevel === 'medium' ? 'text-yellow-600 dark:text-yellow-400' :
-                                      'text-green-600 dark:text-green-400'
+                                      message.aiAnalysis.urgencyLevel === 'high' ? 'text-destructive' :
+                                      message.aiAnalysis.urgencyLevel === 'medium' ? 'text-warning' :
+                                      'text-success'
                                     }`}>
                                       {message.aiAnalysis.urgencyLevel}
                                     </p>
@@ -335,9 +332,7 @@ const Messages = observer(() => {
                                     <span className="text-xs text-muted-foreground uppercase tracking-wide">Key Topics</span>
                                     <div className="flex flex-wrap gap-1 mt-1">
                                       {message.aiAnalysis.keyTopics.map((topic) => (
-                                        <span key={topic} className="px-2 py-0.5 bg-blue-100/50 dark:bg-blue-900/20 border border-blue-300/50 dark:border-blue-700/30 text-blue-600 dark:text-blue-400 text-xs rounded">
-                                          {topic}
-                                        </span>
+                                        <Chip key={topic} variant="info" size="sm">{topic}</Chip>
                                       ))}
                                     </div>
                                   </div>
@@ -362,7 +357,7 @@ const Messages = observer(() => {
                             {message.aiAnalysis.suggestedResponse && (
                               <div className="border-t border-border pt-3">
                                 <div className="flex items-center space-x-2 mb-2">
-                                  <Lightbulb className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+                                  <Lightbulb className="w-4 h-4 text-warning" />
                                   <span className="text-sm font-medium text-card-foreground">Suggested Response</span>
                                 </div>
                                 <p className="text-sm text-card-foreground bg-card rounded p-2 border border-border">
@@ -408,7 +403,7 @@ const Messages = observer(() => {
                     {messagesStore.smartCompose && messagesStore.smartCompose.toneAdjustments && (
                       <div className="flex items-center space-x-4 text-xs">
                         <div className="flex items-center space-x-1">
-                          <Zap className="w-3 h-3 text-yellow-600 dark:text-yellow-400" />
+                          <Zap className="w-3 h-3 text-warning" />
                           <span className="text-muted-foreground">Current tone: {messagesStore.smartCompose.toneAdjustments.current}</span>
                         </div>
                         <div className="flex space-x-2">

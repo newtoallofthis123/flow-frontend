@@ -388,10 +388,11 @@ export class MessagesStore extends BaseStore {
           type,
           subject,
         })
-        // Convert date strings to Date objects
+        // Convert date strings to Date objects, fall back to now if missing/invalid
+        const parsed = message.timestamp ? new Date(message.timestamp) : null
         return {
           ...message,
-          timestamp: new Date(message.timestamp),
+          timestamp: parsed && !isNaN(parsed.getTime()) ? parsed : new Date(),
         }
       },
       {

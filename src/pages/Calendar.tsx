@@ -9,6 +9,9 @@ import AddOutcomeModal from '../components/ui/AddOutcomeModal'
 import { Calendar as CalendarIcon, Clock, Video, MapPin, Users, Building, Target, Brain, Plus, AlertTriangle, CheckCircle } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { CalendarEvent } from '../stores/CalendarStore'
+import { Card } from '../components/ui/Card'
+import { Chip } from '../components/ui/Chip'
+import { FilterButton } from '../components/ui/FilterButton'
 
 const Calendar = observer(() => {
   const { calendarStore, contactsStore } = useStore()
@@ -116,47 +119,19 @@ const Calendar = observer(() => {
     }
   }
 
-  const getEventTypeColor = (type: string) => {
-    switch (type) {
-      case 'meeting':
-        return 'bg-blue-100/50 dark:bg-blue-900/20 border-blue-300/50 dark:border-blue-700/30 text-blue-600 dark:text-blue-400'
-      case 'call':
-        return 'bg-green-100/50 dark:bg-green-900/20 border-green-300/50 dark:border-green-700/30 text-green-600 dark:text-green-400'
-      case 'demo':
-        return 'bg-purple-100/50 dark:bg-purple-900/20 border-purple-300/50 dark:border-purple-700/30 text-purple-600 dark:text-purple-400'
-      case 'follow-up':
-        return 'bg-yellow-100/50 dark:bg-yellow-900/20 border-yellow-300/50 dark:border-yellow-700/30 text-yellow-600 dark:text-yellow-400'
-      default:
-        return 'bg-slate-100/50 dark:bg-slate-900/20 border-slate-300/50 dark:border-slate-700/30 text-slate-600 dark:text-slate-400'
-    }
-  }
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return 'border-l-red-500 dark:border-l-red-400'
-      case 'medium':
-        return 'border-l-yellow-500 dark:border-l-yellow-400'
-      case 'low':
-      default:
-        return 'border-l-blue-500 dark:border-l-blue-400'
-    }
-  }
-
   const EventCard = ({ event }: { event: CalendarEvent }) => {
     const Icon = getEventTypeIcon(event.type)
 
     return (
-      <div
+      <Card
+        interactive
         onClick={() => navigate(`/calendar/${event.id}`)}
-        className={`p-4 bg-card border-l-4 rounded-lg cursor-pointer hover:bg-accent/50 transition-all border border-border ${getPriorityColor(event.priority)} ${
-          id === event.id ? 'ring-2 ring-primary' : ''
-        }`}
+        className={`p-4 ${id === event.id ? 'ring-2 ring-primary' : ''}`}
       >
         {/* Event Header */}
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-start space-x-3 flex-1 min-w-0">
-            <div className={`p-2 rounded-lg ${getEventTypeColor(event.type)}`}>
+            <div className="p-2 rounded-lg bg-muted text-muted-foreground">
               <Icon className="w-4 h-4" />
             </div>
             <div className="flex-1 min-w-0">
@@ -176,9 +151,7 @@ const Calendar = observer(() => {
             </div>
           </div>
           {event.priority === 'high' && (
-            <div className="px-2 py-1 bg-red-100/50 dark:bg-red-900/20 border border-red-300/50 dark:border-red-700/30 rounded text-red-600 dark:text-red-400 text-xs">
-              High Priority
-            </div>
+            <Chip variant="warning" size="sm">High Priority</Chip>
           )}
         </div>
 
@@ -219,19 +192,15 @@ const Calendar = observer(() => {
           {event.tags.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-2">
               {event.tags.slice(0, 3).map((tag) => (
-                <span key={tag} className="px-2 py-0.5 bg-secondary text-secondary-foreground text-xs rounded">
-                  {tag}
-                </span>
+                <Chip key={tag} size="sm">{tag}</Chip>
               ))}
               {event.tags.length > 3 && (
-                <span className="px-2 py-0.5 bg-secondary text-muted-foreground text-xs rounded">
-                  +{event.tags.length - 3}
-                </span>
+                <Chip size="sm">+{event.tags.length - 3}</Chip>
               )}
             </div>
           )}
         </div>
-      </div>
+      </Card>
     )
   }
 
@@ -272,7 +241,7 @@ const Calendar = observer(() => {
               value={calendarStore.searchQuery}
               onChange={calendarStore.setSearchQuery}
               placeholder="Search events, contacts..."
-              showAI={true}
+              showAI={false}
               showFilter={true}
               filters={searchFilters}
               selectedFilter={calendarStore.filterBy}
@@ -282,17 +251,25 @@ const Calendar = observer(() => {
             />
           </div>
 
-          {/* Calendar Stats */}
+          {/* Calendar Filters */}
           <div className="p-4 border-b border-border bg-card/30">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-card rounded-lg p-3 border border-border">
-                <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{calendarStore.calendarStats.meetingsThisWeek}</div>
-                <div className="text-xs text-muted-foreground">Meetings This Week</div>
-              </div>
-              <div className="bg-card rounded-lg p-3 border border-border">
-                <div className="text-lg font-bold text-red-600 dark:text-red-400">{calendarStore.calendarStats.highPriorityThisWeek}</div>
-                <div className="text-xs text-muted-foreground">High Priority</div>
-              </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <FilterButton
+                icon={CalendarIcon}
+                active={calendarStore.filterBy === 'meetings'}
+                count={calendarStore.calendarStats.meetingsThisWeek}
+                onClick={() => calendarStore.setFilter('meetings' as typeof calendarStore.filterBy)}
+              >
+                Meetings This Week
+              </FilterButton>
+              <FilterButton
+                icon={AlertTriangle}
+                active={calendarStore.filterBy === 'high-priority'}
+                count={calendarStore.calendarStats.highPriorityThisWeek}
+                onClick={() => calendarStore.setFilter('high-priority' as typeof calendarStore.filterBy)}
+              >
+                High Priority
+              </FilterButton>
             </div>
           </div>
 
@@ -387,7 +364,7 @@ const Calendar = observer(() => {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
-                      <div className={`p-3 rounded-lg ${getEventTypeColor(enhancedEvent.type)}`}>
+                      <div className="p-3 rounded-lg bg-muted text-muted-foreground">
                         {(() => {
                           const Icon = getEventTypeIcon(enhancedEvent.type)
                           return <Icon className="w-6 h-6" />
@@ -451,9 +428,9 @@ const Calendar = observer(() => {
                       </button>
                     )}
                     {!enhancedEvent.outcome && (
-                      <button 
+                      <button
                         onClick={() => setIsAddOutcomeModalOpen(true)}
-                        className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-white transition-colors"
+                        className="flex items-center space-x-2 px-4 py-2 bg-success hover:bg-success/90 rounded-lg text-success-foreground transition-colors"
                       >
                         <CheckCircle className="w-4 h-4" />
                         <span>Add Outcome</span>
@@ -472,7 +449,7 @@ const Calendar = observer(() => {
                   {/* Main Content */}
                   <div className="col-span-2 space-y-6">
                     {/* Meeting Preparation */}
-                    <div className="bg-card rounded-lg p-6 border border-border">
+                    <Card className="p-6">
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold text-card-foreground flex items-center space-x-2">
                           <Brain className="w-5 h-5 text-primary" />
@@ -568,7 +545,7 @@ const Calendar = observer(() => {
                               <div className="space-y-2">
                                 {prep.documentsToShare.map((doc, index) => (
                                   <div key={index} className="flex items-center space-x-2 p-2 bg-accent/30 rounded text-sm text-card-foreground border border-border">
-                                    <div className="w-2 h-2 bg-green-400 rounded-full" />
+                                    <div className="w-2 h-2 bg-success rounded-full" />
                                     <span>{doc}</span>
                                   </div>
                                 ))}
@@ -590,13 +567,13 @@ const Calendar = observer(() => {
 
                           {/* Competitor Intel */}
                           {prep.competitorIntel && prep.competitorIntel.length > 0 && (
-                            <div className="mt-6 bg-red-100/50 dark:bg-red-900/10 border border-red-300/50 dark:border-red-700/30 rounded-lg p-4">
-                              <h4 className="font-semibold text-red-600 dark:text-red-400 mb-3">Competitor Intelligence</h4>
+                            <div className="mt-6 bg-destructive/5 border-l-2 border-destructive rounded-lg p-4">
+                              <h4 className="font-semibold text-destructive mb-3">Competitor Intelligence</h4>
                               <div className="space-y-2">
                                 {prep.competitorIntel.map((intel, index) => (
                                   <div key={index} className="flex items-start gap-2">
-                                    <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-                                    <p className="text-sm text-red-700 dark:text-red-300">{intel}</p>
+                                    <AlertTriangle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                                    <p className="text-sm text-destructive">{intel}</p>
                                   </div>
                                 ))}
                               </div>
@@ -605,11 +582,11 @@ const Calendar = observer(() => {
                           </>
                         )
                       })()}
-                    </div>
+                    </Card>
 
                     {/* Attendees */}
                     {enhancedEvent.attendees && enhancedEvent.attendees.length > 0 && (
-                      <div className="bg-card rounded-lg p-6 border border-border">
+                      <Card className="p-6">
                         <h3 className="text-lg font-semibold text-card-foreground mb-4">Attendees</h3>
                         <div className="space-y-3">
                           {enhancedEvent.attendees.map((attendee) => (
@@ -619,25 +596,28 @@ const Calendar = observer(() => {
                                 <div className="text-sm text-muted-foreground">{attendee.role}</div>
                                 <div className="text-sm text-muted-foreground/70">{attendee.email}</div>
                               </div>
-                              <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                attendee.status === 'accepted' ? 'bg-green-100/50 dark:bg-green-900/20 text-green-600 dark:text-green-400' :
-                                attendee.status === 'declined' ? 'bg-red-100/50 dark:bg-red-900/20 text-red-600 dark:text-red-400' :
-                                attendee.status === 'tentative' ? 'bg-yellow-100/50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400' :
-                                'bg-muted text-muted-foreground'
-                              }`}>
+                              <Chip
+                                variant={
+                                  attendee.status === 'accepted' ? 'success' :
+                                  attendee.status === 'declined' ? 'danger' :
+                                  attendee.status === 'tentative' ? 'warning' :
+                                  'default'
+                                }
+                                size="sm"
+                              >
                                 {attendee.status}
-                              </div>
+                              </Chip>
                             </div>
                           ))}
                         </div>
-                      </div>
+                      </Card>
                     )}
 
                     {/* Meeting Outcome */}
                     {enhancedEvent.outcome && (
-                      <div className="bg-card rounded-lg p-6 border border-border">
+                      <Card className="p-6">
                         <h3 className="text-lg font-semibold text-card-foreground mb-4 flex items-center space-x-2">
-                          <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                          <CheckCircle className="w-5 h-5 text-success" />
                           <span>Meeting Outcome</span>
                         </h3>
                         
@@ -707,7 +687,7 @@ const Calendar = observer(() => {
                             </div>
                           )}
                         </div>
-                      </div>
+                      </Card>
                     )}
                   </div>
 
@@ -738,18 +718,20 @@ const Calendar = observer(() => {
                     </div>
 
                     {/* Event Status */}
-                    <div className="bg-card rounded-lg p-4 border border-border">
+                    <Card className="p-4">
                       <h4 className="font-semibold text-card-foreground mb-3">Event Status</h4>
-                      <div className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
-                        enhancedEvent.status === 'confirmed' ? 'bg-green-100/50 dark:bg-green-900/20 text-green-600 dark:text-green-400' :
-                        enhancedEvent.status === 'scheduled' ? 'bg-blue-100/50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' :
-                        enhancedEvent.status === 'completed' ? 'bg-muted text-muted-foreground' :
-                        enhancedEvent.status === 'cancelled' ? 'bg-red-100/50 dark:bg-red-900/20 text-red-600 dark:text-red-400' :
-                        'bg-yellow-100/50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400'
-                      }`}>
+                      <Chip
+                        variant={
+                          enhancedEvent.status === 'confirmed' ? 'success' :
+                          enhancedEvent.status === 'scheduled' ? 'info' :
+                          enhancedEvent.status === 'completed' ? 'default' :
+                          enhancedEvent.status === 'cancelled' ? 'danger' :
+                          'warning'
+                        }
+                      >
                         {enhancedEvent.status.charAt(0).toUpperCase() + enhancedEvent.status.slice(1)}
-                      </div>
-                    </div>
+                      </Chip>
+                    </Card>
 
                   </div>
                 </div>

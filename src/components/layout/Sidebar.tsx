@@ -4,9 +4,6 @@ import {
   Target,
   MessageSquare,
   Calendar,
-  TrendingUp,
-  Brain,
-  Settings,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react'
@@ -24,9 +21,6 @@ const Sidebar = observer(() => {
     { icon: Target, label: 'Deals', path: '/deals', badge: '7' },
     { icon: MessageSquare, label: 'Messages', path: '/messages' },
     { icon: Calendar, label: 'Calendar', path: '/calendar' },
-    { icon: TrendingUp, label: 'Analytics', path: '/analytics' },
-    { icon: Brain, label: 'AI Insights', path: '/ai-insights', highlight: true },
-    { icon: Settings, label: 'Settings', path: '/settings' },
   ]
 
   const isActive = (path: string) => {
@@ -66,11 +60,11 @@ const Sidebar = observer(() => {
                   active
                     ? 'bg-sidebar-accent text-sidebar-foreground'
                     : 'text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent/50'
-                } ${item.highlight ? 'bg-accent/20 border border-border' : ''}`}
+                }`}
                 title={uiStore.sidebarCollapsed ? item.label : undefined}
               >
                 <div className="flex items-center space-x-3">
-                  <Icon className={`w-5 h-5 ${item.highlight ? 'text-primary' : active ? 'text-sidebar-foreground' : ''}`} />
+                  <Icon className={`w-5 h-5 ${active ? 'text-sidebar-foreground' : ''}`} />
                   {!uiStore.sidebarCollapsed && (
                     <span className="text-sm font-medium">{item.label}</span>
                   )}
