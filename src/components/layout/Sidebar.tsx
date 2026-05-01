@@ -10,10 +10,19 @@ import {
 import { Link, useLocation } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
 import { useStore } from '../../stores'
+import { SIDEBAR_MIN_WIDTH, SIDEBAR_MAX_WIDTH } from '../../stores/UIStore'
+import { useResizable } from '../../hooks/useResizable'
 
 const Sidebar = observer(() => {
   const location = useLocation()
   const { uiStore } = useStore()
+  const resize = useResizable({
+    side: 'right',
+    getCurrentWidth: () => uiStore.sidebarWidth,
+    onResize: (w) => uiStore.setSidebarWidth(w),
+    min: SIDEBAR_MIN_WIDTH,
+    max: SIDEBAR_MAX_WIDTH,
+  })
 
   const navItems = [
     { icon: BarChart3, label: 'Dashboard', path: '/dashboard' },
@@ -28,9 +37,10 @@ const Sidebar = observer(() => {
   }
 
   return (
-    <div className={`relative bg-sidebar border-r border-sidebar-border transition-all duration-300 ${
-      uiStore.sidebarCollapsed ? 'w-16' : 'w-64'
-    }`}>
+    <div
+      className="relative bg-sidebar border-r border-sidebar-border flex-shrink-0"
+      style={{ width: uiStore.sidebarCollapsed ? 64 : uiStore.sidebarWidth }}
+    >
       <div className="p-6">
         {!uiStore.sidebarCollapsed ? (
           <Link to="/dashboard" className="flex items-center space-x-2 mb-8 hover:opacity-80 transition-opacity">
@@ -89,9 +99,18 @@ const Sidebar = observer(() => {
         </nav>
       </div>
 
+      {!uiStore.sidebarCollapsed && (
+        <div
+          onMouseDown={resize.onMouseDown}
+          className="absolute top-0 right-0 h-full w-1 cursor-col-resize hover:bg-primary/40 transition-colors z-20"
+          aria-label="Resize sidebar"
+          role="separator"
+        />
+      )}
+
       <button
         onClick={() => uiStore.toggleSidebar()}
-        className="absolute -right-3 top-6 w-6 h-6 bg-sidebar border border-sidebar-border rounded-full flex items-center justify-center hover:bg-sidebar-accent transition-colors z-10 shadow-sm"
+        className="absolute -right-3 top-6 w-6 h-6 bg-sidebar border border-sidebar-border rounded-full flex items-center justify-center hover:bg-sidebar-accent transition-colors z-30 shadow-sm"
         aria-label={uiStore.sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       >
         {uiStore.sidebarCollapsed ? (

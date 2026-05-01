@@ -16,7 +16,7 @@ import { Chip } from '../components/ui/Chip'
 import { FilterButton } from '../components/ui/FilterButton'
 
 const Contacts = observer(() => {
-  const { contactsStore } = useStore()
+  const { contactsStore, messagesStore, calendarStore } = useStore()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -303,19 +303,39 @@ const Contacts = observer(() => {
 
                 {/* Quick Actions */}
                 <div className="flex items-center space-x-3">
-                  <button className="flex items-center space-x-2 px-4 py-2 bg-primary hover:bg-primary/90 rounded-lg text-primary-foreground transition-colors">
+                  <a
+                    href={selectedContact.phone ? `tel:${selectedContact.phone}` : undefined}
+                    aria-disabled={!selectedContact.phone}
+                    className={`flex items-center space-x-2 px-4 py-2 bg-primary hover:bg-primary/90 rounded-lg text-primary-foreground transition-colors ${!selectedContact.phone ? 'opacity-50 pointer-events-none' : ''}`}
+                  >
                     <Phone className="w-4 h-4" />
                     <span>Call</span>
-                  </button>
-                  <button className="flex items-center space-x-2 px-4 py-2 bg-secondary hover:bg-secondary/80 rounded-lg text-secondary-foreground transition-colors">
+                  </a>
+                  <a
+                    href={selectedContact.email ? `mailto:${selectedContact.email}` : undefined}
+                    aria-disabled={!selectedContact.email}
+                    className={`flex items-center space-x-2 px-4 py-2 bg-secondary hover:bg-secondary/80 rounded-lg text-secondary-foreground transition-colors ${!selectedContact.email ? 'opacity-50 pointer-events-none' : ''}`}
+                  >
                     <Mail className="w-4 h-4" />
                     <span>Email</span>
-                  </button>
-                  <button className="flex items-center space-x-2 px-4 py-2 bg-secondary hover:bg-secondary/80 rounded-lg text-secondary-foreground transition-colors">
+                  </a>
+                  <button
+                    onClick={() => {
+                      const event = calendarStore.events.find(e => e.contactId === selectedContact.id)
+                      navigate(event ? `/calendar/${event.id}` : '/calendar')
+                    }}
+                    className="flex items-center space-x-2 px-4 py-2 bg-secondary hover:bg-secondary/80 rounded-lg text-secondary-foreground transition-colors"
+                  >
                     <Calendar className="w-4 h-4" />
                     <span>Schedule</span>
                   </button>
-                  <button className="flex items-center space-x-2 px-4 py-2 bg-secondary hover:bg-secondary/80 rounded-lg text-secondary-foreground transition-colors">
+                  <button
+                    onClick={() => {
+                      const conv = messagesStore.conversations.find(c => c.contactId === selectedContact.id)
+                      navigate(conv ? `/messages/${conv.id}` : '/messages')
+                    }}
+                    className="flex items-center space-x-2 px-4 py-2 bg-secondary hover:bg-secondary/80 rounded-lg text-secondary-foreground transition-colors"
+                  >
                     <MessageSquare className="w-4 h-4" />
                     <span>Message</span>
                   </button>

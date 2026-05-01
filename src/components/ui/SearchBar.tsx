@@ -92,7 +92,7 @@ const SearchBar = ({
             type="text"
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            onFocus={() => setShowSuggestions(aiSuggestions.length > 0)}
+            onFocus={() => setShowSuggestions(showAI && aiSuggestions.length > 0)}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
             placeholder={placeholder}
             className={`w-full ${sizeClasses.container} ${sizeClasses.input} bg-secondary border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors`}
@@ -156,7 +156,7 @@ const SearchBar = ({
       </div>
 
       {/* AI Suggestions dropdown */}
-      {showSuggestions && aiSuggestions.length > 0 && (
+      {showAI && showSuggestions && aiSuggestions.length > 0 && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-xl z-50">
           <div className="p-3 border-b border-border">
             <div className="flex items-center space-x-2">

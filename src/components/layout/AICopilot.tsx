@@ -2,7 +2,11 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Brain, ChevronRight, Bot, User, Send, Loader2 } from 'lucide-react'
 import { observer } from 'mobx-react-lite'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { useStore } from '../../stores'
+import { AI_COPILOT_MIN_WIDTH, AI_COPILOT_MAX_WIDTH } from '../../stores/UIStore'
+import { useResizable } from '../../hooks/useResizable'
 import { llmApi } from '../../api'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
 
@@ -22,6 +26,13 @@ const AICopilot = observer(() => {
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const resize = useResizable({
+    side: 'left',
+    getCurrentWidth: () => uiStore.aiCopilotWidth,
+    onResize: (w) => uiStore.setAICopilotWidth(w),
+    min: AI_COPILOT_MIN_WIDTH,
+    max: AI_COPILOT_MAX_WIDTH,
+  })
 
   // Don't render if not authenticated
   if (!userStore.isAuthenticated) {
@@ -373,7 +384,16 @@ ${stats.length > 0 ? stats.map(s => `  - ${s.stage}: ${s.count} deals, $${(s.tot
   }
 
   return (
-    <div className="relative w-80 bg-sidebar border-l border-sidebar-border flex flex-col h-full">
+    <div
+      className="relative bg-sidebar border-l border-sidebar-border flex flex-col h-full flex-shrink-0"
+      style={{ width: uiStore.aiCopilotWidth }}
+    >
+      <div
+        onMouseDown={resize.onMouseDown}
+        className="absolute top-0 left-0 h-full w-1 cursor-col-resize hover:bg-primary/40 transition-colors z-20"
+        aria-label="Resize AI copilot"
+        role="separator"
+      />
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-sidebar-border flex-shrink-0">
         <div className="flex items-center space-x-2">
@@ -430,7 +450,15 @@ ${stats.length > 0 ? stats.map(s => `  - ${s.stage}: ${s.count} deals, $${(s.tot
                   : 'bg-card text-card-foreground border border-border'
               }`}
             >
-              <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+              {message.role === 'user' ? (
+                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+              ) : (
+                <div className="text-sm prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0 prose-pre:my-2 prose-pre:bg-muted prose-pre:text-foreground prose-code:before:content-none prose-code:after:content-none prose-headings:my-2 prose-headings:text-foreground prose-a:text-primary">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {message.content}
+                  </ReactMarkdown>
+                </div>
+              )}
               <p className={`text-xs mt-1 ${message.role === 'user' ? 'opacity-70' : 'text-muted-foreground'}`}>
                 {message.timestamp.toLocaleTimeString([], {
                   hour: '2-digit',

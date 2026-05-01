@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
-import { Search, Share2, Bell, HelpCircle, User, LogOut, ChevronDown } from 'lucide-react'
+import { Search, Bell, User, LogOut, ChevronDown } from 'lucide-react'
 import { useStore } from '../../stores'
 import ThemeToggle from '../ui/ThemeToggle'
 
@@ -42,14 +42,12 @@ const Header = observer(() => {
 
       <div className="flex items-center space-x-4">
         <ThemeToggle />
-        <button className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-accent">
-          <Share2 className="w-5 h-5" />
-        </button>
-        <button className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-accent">
+        <button
+          onClick={() => navigate('/actions')}
+          aria-label="Smart Action Feed"
+          className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-accent"
+        >
           <Bell className="w-5 h-5" />
-        </button>
-        <button className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-accent">
-          <HelpCircle className="w-5 h-5" />
         </button>
         <div className="relative">
           <button

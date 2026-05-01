@@ -10,6 +10,7 @@ import Deals from './pages/Deals'
 import Messages from './pages/Messages'
 import Calendar from './pages/Calendar'
 import SearchResults from './pages/SearchResults'
+import Actions from './pages/Actions'
 
 // Component to sync route changes with RootStore
 const RouteSync = ({ children }: { children: React.ReactNode }) => {
@@ -152,6 +153,16 @@ const router = createBrowserRouter([
       <ProtectedRoute>
         <RouteSync>
           <SearchResults />
+        </RouteSync>
+      </ProtectedRoute>
+    )
+  },
+  {
+    path: '/actions',
+    element: (
+      <ProtectedRoute>
+        <RouteSync>
+          <Actions />
         </RouteSync>
       </ProtectedRoute>
     )
